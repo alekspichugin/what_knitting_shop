@@ -15,9 +15,23 @@ jobs:
         with:
           channel: stable
 
-      - name: Build Flutter Web (WASM)
+      - name: Build client app
         working-directory: shop
         run: flutter build web --wasm
+
+      - name: Save client build
+        run: cp -r shop/build/web shop/build/client
+
+      - name: Build admin app
+        working-directory: shop
+        run: flutter build web --wasm --target lib/main_admin.dart --base-href /admin/
+
+      - name: Merge admin into client
+        run: |
+          mkdir -p shop/build/client/admin
+          cp -r shop/build/web/* shop/build/client/admin/
+          rm -rf shop/build/web
+          mv shop/build/client shop/build/web
 
       - name: Deploy to Firebase Hosting
         run: |
