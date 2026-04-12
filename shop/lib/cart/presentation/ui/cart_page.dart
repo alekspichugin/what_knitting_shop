@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shop/cart/domain/model/cart_item.dart';
 import 'package:shop/cart/presentation/bloc/cart_cubit.dart';
 import 'package:shop/cart/presentation/ui/cart_item_tile.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/common/ui/app_shell.dart';
 import 'package:shop/routes.dart';
 
@@ -176,6 +177,28 @@ class _CartItemRow extends StatelessWidget {
   }
 }
 
+class _OrderButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: () => context.push(kOrderRoute),
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF7C3AED),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Оформить заказ', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          SizedBox(width: 8),
+          Icon(Icons.arrow_forward, size: 18),
+        ],
+      ),
+    );
+  }
+}
+
 class _QtyButton extends StatelessWidget {
   const _QtyButton({required this.icon, required this.onTap});
 
@@ -204,49 +227,46 @@ class _CartFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = context.isMobile;
+    final hPad = context.responsive<double>(mobile: 16, tablet: 24, desktop: 32);
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
       ),
       child: ContentBox(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-        child: Row(
-          children: [
-            Text(
-              'Товаров: $totalCount шт.',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF374151),
-              ),
-            ),
-            const Spacer(),
-            FilledButton(
-              onPressed: () => context.push(kOrderRoute),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
+        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
+        child: mobile
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Оформить заказ',
-                    style:
-                        TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                    'Товаров: $totalCount шт.',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF374151),
+                    ),
                   ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, size: 18),
+                  const Gap(12),
+                  _OrderButton(),
+                ],
+              )
+            : Row(
+                children: [
+                  Text(
+                    'Товаров: $totalCount шт.',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                  const Spacer(),
+                  _OrderButton(),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

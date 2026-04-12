@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shop/about/presentation/bloc/about_cubit.dart';
+import 'package:shop/about/presentation/bloc/about_editor_cubit.dart';
 import 'package:shop/about/presentation/ui/admin/about_admin_page.dart';
 import 'package:shop/about/presentation/ui/admin/about_editor_page.dart';
 import 'package:shop/admin/ui/admin_shell.dart';
@@ -39,10 +40,11 @@ GoRouter createAdminRouter(AbstractInjector injector, ValueNotifier<bool> auth) 
         // автоматически получает обновлённое состояние.
         builder: (context, state, child) => MultiBlocProvider(
           providers: [
-            BlocProvider(create: (_) => ProductAdminCubit(injector.productRepository)..load()),
+            BlocProvider(create: (_) => ProductAdminCubit(injector.productRepository, injector.productGroupRepository)..load()),
             BlocProvider(create: (_) => GroupAdminCubit(injector.productGroupRepository)..load()),
             BlocProvider(create: (_) => NewsAdminCubit(injector.newsRepository)..load()),
             BlocProvider(create: (_) => AboutCubit(injector.aboutRepository)..load()),
+            BlocProvider(create: (_) => AboutEditorCubit(injector.cloudinaryService)),
           ],
           child: AdminShell(child: child),
         ),

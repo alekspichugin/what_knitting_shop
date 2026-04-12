@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shop/admin/auth/admin_auth.dart';
 
 class LoginPage extends StatefulWidget {
@@ -12,6 +14,15 @@ class _LoginPageState extends State<LoginPage> {
   final _loginCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscure = true;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kDebugMode) {
+      _loginCtrl.text = 'admin@shop.ru';
+      _passCtrl.text = 'greedisgood';
+    }
+  }
   bool _loading = false;
   String? _loginError;
   String? _passError;
@@ -35,6 +46,7 @@ class _LoginPageState extends State<LoginPage> {
     if (login.isEmpty || pass.isEmpty) return;
     setState(() => _loading = true);
     final error = await AdminAuth.login(context, login, pass);
+    if (error == null) TextInput.finishAutofillContext();
     if (mounted) setState(() { _loading = false; if (error != null) _authError = error; });
   }
 
@@ -64,28 +76,38 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  TextField(
-                    controller: _loginCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'Логин',
-                      prefixIcon: const Icon(Icons.person_outline),
-                      border: const OutlineInputBorder(),
-                      errorText: _loginError,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _passCtrl,
-                    obscureText: _obscure,
-                    decoration: InputDecoration(
-                      labelText: 'Пароль',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      border: const OutlineInputBorder(),
-                      errorText: _passError,
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _obscure = !_obscure),
-                      ),
+                  AutofillGroup(
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _loginCtrl,
+                          autofillHints: const [AutofillHints.email],
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: InputDecoration(
+                            labelText: 'Логин',
+                            prefixIcon: const Icon(Icons.person_outline),
+                            border: const OutlineInputBorder(),
+                            errorText: _loginError,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _passCtrl,
+                          obscureText: _obscure,
+                          autofillHints: const [AutofillHints.password],
+                          onSubmitted: (_) => _submit(),
+                          decoration: InputDecoration(
+                            labelText: 'Пароль',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            border: const OutlineInputBorder(),
+                            errorText: _passError,
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+                              onPressed: () => setState(() => _obscure = !_obscure),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   if (_authError != null) ...[

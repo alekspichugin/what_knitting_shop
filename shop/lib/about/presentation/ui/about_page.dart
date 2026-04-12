@@ -114,14 +114,17 @@ class _Block extends StatelessWidget {
         if (block.content.isEmpty) return const SizedBox();
         return ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.network(
-            cloudinaryUrl(block.content, size: CloudinarySize.medium),
-            fit: BoxFit.cover,
-            width: double.infinity,
-            errorBuilder: (_, __, ___) => Container(
-              height: 200,
-              color: const Color(0xFFF3F4F6),
-              child: const Center(child: Icon(Icons.broken_image, color: Color(0xFFD1D5DB), size: 40)),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: Image.network(
+              cloudinaryUrl(block.content, size: CloudinarySize.medium),
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (_, __, ___) => Container(
+                color: const Color(0xFFF3F4F6),
+                child: const Center(child: Icon(Icons.broken_image, color: Color(0xFFD1D5DB), size: 40)),
+              ),
             ),
           ),
         );

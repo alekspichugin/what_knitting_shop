@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/common/ui/app_shell.dart';
 import 'package:shop/home/presentation/bloc/home_cubit.dart';
 import 'package:shop/product_group/domain/model/product_group.dart';
@@ -52,7 +53,7 @@ class _GroupsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cols = 3;
+    final cols = context.responsive<int>(mobile: 1, tablet: 2, desktop: 3);
     final rows = <List<ProductGroup>>[];
     for (var i = 0; i < groups.length; i += cols) {
       rows.add(groups.sublist(i, (i + cols).clamp(0, groups.length)));
@@ -109,34 +110,34 @@ class _GroupCardState extends State<_GroupCard> {
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              height: 200,
               transform: _hovered
                   ? (Matrix4.identity()..translate(0.0, -3.0))
                   : Matrix4.identity(),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: widget.group.imageUrl.isNotEmpty
-                    ? Image.network(
-                        widget.group.imageUrl,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (_, child, progress) => progress == null
-                            ? child
-                            : Container(
-                                height: 200,
-                                color: widget.group.color,
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white),
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: widget.group.imageUrl.isNotEmpty
+                      ? Image.network(
+                          widget.group.imageUrl,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (_, child, progress) => progress == null
+                              ? child
+                              : Container(
+                                  color: widget.group.color,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white),
+                                  ),
                                 ),
-                              ),
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 200,
-                          color: widget.group.color,
-                        ),
-                      )
-                    : Container(height: 200, color: widget.group.color),
+                          errorBuilder: (_, __, ___) => Container(
+                            color: widget.group.color,
+                          ),
+                        )
+                      : Container(color: widget.group.color),
+                ),
               ),
             ),
             const Gap(10),

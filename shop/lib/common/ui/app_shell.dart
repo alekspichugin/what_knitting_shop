@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shop/cart/presentation/bloc/cart_cubit.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/routes.dart';
 
 const _kBrandColor = Color(0xFF7C3AED);
@@ -25,9 +26,10 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
+      drawer: context.isMobile ? const _MobileDrawer() : null,
       body: Column(
         children: [
-          const _WebHeader(),
+          const _AppHeader(),
           Expanded(child: child),
         ],
       ),
@@ -36,27 +38,31 @@ class AppShell extends StatelessWidget {
 }
 
 // =============================================================================
-// ContentBox — ограничивает контент по ширине
+// ContentBox — ограничивает контент по ширине, адаптивный padding
 // =============================================================================
 
 class ContentBox extends StatelessWidget {
   const ContentBox({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+    this.padding,
   });
 
   final Widget child;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
+    final hPad = context.responsive<double>(mobile: 16, tablet: 24, desktop: 32);
+    final effectivePadding = padding ??
+        EdgeInsets.symmetric(horizontal: hPad, vertical: 24);
+
     return Align(
       alignment: Alignment.topLeft,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: _kMaxWidth),
         child: Padding(
-          padding: padding,
+          padding: effectivePadding,
           child: child,
         ),
       ),
@@ -65,30 +71,46 @@ class ContentBox extends StatelessWidget {
 }
 
 // =============================================================================
-// Веб-хедер
+// Хедер — десктоп: nav-ссылки; мобиль: hamburger
 // =============================================================================
 
-class _WebHeader extends StatelessWidget {
-  const _WebHeader();
+class _AppHeader extends StatelessWidget {
+  const _AppHeader();
 
   @override
   Widget build(BuildContext context) {
+    final mobile = context.isMobile;
+    final hPad = context.responsive<double>(mobile: 16, tablet: 24, desktop: 32);
+
     return Container(
       color: Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            height: 64,
+            height: 56,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: EdgeInsets.symmetric(horizontal: hPad),
               child: Row(
                 children: [
+                  if (mobile)
+                    Builder(
+                      builder: (ctx) => IconButton(
+                        icon: const Icon(Icons.menu, color: Color(0xFF374151)),
+                        onPressed: () => Scaffold.of(ctx).openDrawer(),
+                        tooltip: 'Меню',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ),
+                  if (mobile) const SizedBox(width: 12),
                   const _Logo(),
-                  const SizedBox(width: 48),
-                  const _NavLink(label: 'Каталог', route: kCatalogRoute),
-                  const SizedBox(width: 24),
-                  const _NavLink(label: 'О нас', route: kAboutRoute),
+                  if (!mobile) ...[
+                    const SizedBox(width: 40),
+                    const _NavLink(label: 'Каталог', route: kCatalogRoute),
+                    const SizedBox(width: 24),
+                    const _NavLink(label: 'О нас', route: kAboutRoute),
+                  ],
                   const Spacer(),
                   const _CartButton(),
                 ],
@@ -98,6 +120,78 @@ class _WebHeader extends StatelessWidget {
           const Divider(height: 1, thickness: 1, color: Color(0xFFE5E7EB)),
         ],
       ),
+    );
+  }
+}
+
+// =============================================================================
+// Мобильный Drawer
+// =============================================================================
+
+class _MobileDrawer extends StatelessWidget {
+  const _MobileDrawer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: const _Logo(),
+            ),
+            const Divider(),
+            _DrawerItem(
+              icon: Icons.grid_view_rounded,
+              label: 'Каталог',
+              route: kCatalogRoute,
+            ),
+            _DrawerItem(
+              icon: Icons.info_outline_rounded,
+              label: 'О нас',
+              route: kAboutRoute,
+            ),
+            _DrawerItem(
+              icon: Icons.shopping_cart_outlined,
+              label: 'Корзина',
+              route: kProductBasketRoute,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.route,
+  });
+
+  final IconData icon;
+  final String label;
+  final String route;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: _kBrandColor, size: 20),
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF374151),
+        ),
+      ),
+      onTap: () {
+        Navigator.of(context).pop();
+        context.go(route);
+      },
     );
   }
 }
@@ -210,20 +304,25 @@ class _CartButtonState extends State<_CartButton> {
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, state) {
         final hasItems = state.totalCount > 0;
+        final mobile = context.isMobile;
+
         return MouseRegion(
           cursor: SystemMouseCursors.click,
           onEnter: (_) => setState(() => _hovered = true),
           onExit: (_) => setState(() => _hovered = false),
           child: GestureDetector(
             onTap: () {
-                final current = GoRouterState.of(context).uri.path;
-                if (current != kProductBasketRoute) {
-                  context.push(kProductBasketRoute);
-                }
-              },
+              final current = GoRouterState.of(context).uri.path;
+              if (current != kProductBasketRoute) {
+                context.push(kProductBasketRoute);
+              }
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: mobile ? 10 : 16,
+                vertical: 8,
+              ),
               decoration: BoxDecoration(
                 color: hasItems
                     ? _kBrandColor
@@ -245,8 +344,8 @@ class _CartButtonState extends State<_CartButton> {
                     size: 18,
                     color: hasItems ? Colors.white : const Color(0xFF374151),
                   ),
-                  const SizedBox(width: 8),
-                  if (hasItems)
+                  if (hasItems) ...[
+                    const SizedBox(width: 6),
                     Text(
                       '${state.totalCount}',
                       style: const TextStyle(
@@ -254,8 +353,9 @@ class _CartButtonState extends State<_CartButton> {
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
-                    )
-                  else
+                    ),
+                  ] else if (!mobile) ...[
+                    const SizedBox(width: 8),
                     const Text(
                       'Корзина',
                       style: TextStyle(
@@ -264,6 +364,7 @@ class _CartButtonState extends State<_CartButton> {
                         fontSize: 14,
                       ),
                     ),
+                  ],
                 ],
               ),
             ),

@@ -1,61 +1,22 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 import 'package:shop/about/domain/model/about_content.dart';
 import 'package:shop/about/presentation/bloc/about_cubit.dart';
+import 'package:shop/about/presentation/bloc/about_editor_cubit.dart';
+import 'package:shop/about/presentation/bloc/about_editor_state.dart';
 import 'package:shop/common/cloudinary.dart';
 import 'package:web/web.dart' as web;
 
-const _kCloudName   = 'db7wmn9yi';
-const _kPreset      = 'what_kniting_products';
 const _kBrand       = Color(0xFF7C3AED);
 const _kBrandLight  = Color(0xFFEDE9FE);
 const _kBrandMedium = Color(0xFFF5F3FF);
 const _kBorder      = Color(0xFFE5E7EB);
 const _kGray        = Color(0xFF9CA3AF);
-
-// ─── Local state ─────────────────────────────────────────────────────────────
-
-class _BlockData {
-  _BlockData({required this.id, required this.type, TextEditingController? ctrl, this.imageId})
-      : ctrl = ctrl ?? (type != AboutBlockType.image ? TextEditingController() : null);
-
-  final String id;
-  final AboutBlockType type;
-  final TextEditingController? ctrl;
-  String? imageId;
-
-  factory _BlockData.fromBlock(AboutBlock b) => _BlockData(
-        id: b.id,
-        type: b.type,
-        ctrl: b.type != AboutBlockType.image ? TextEditingController(text: b.content) : null,
-        imageId: b.type == AboutBlockType.image ? b.content : null,
-      );
-
-  factory _BlockData.fresh(AboutBlockType type) => _BlockData(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        type: type,
-      );
-
-  void dispose() => ctrl?.dispose();
-}
-
-class _RowData {
-  _RowData({required this.id, required this.blocks});
-  final String id;
-  final List<_BlockData> blocks;
-
-  factory _RowData.fresh(AboutBlockType type) => _RowData(
-        id: DateTime.now().microsecondsSinceEpoch.toString(),
-        blocks: [_BlockData.fresh(type)],
-      );
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -67,107 +28,38 @@ class AboutEditorPage extends StatefulWidget {
 }
 
 class _AboutEditorPageState extends State<AboutEditorPage> {
-  final List<_RowData> _rows = [];
-  bool _initialized = false;
-  bool _uploading = false;
+  /// TextEditingController для текстовых блоков, ключ = block.id
+  final Map<String, TextEditingController> _controllers = {};
 
   @override
   void dispose() {
-    for (final row in _rows) {
-      for (final b in row.blocks) b.dispose();
-    }
+    for (final c in _controllers.values) c.dispose();
     super.dispose();
   }
 
-  void _initFrom(AboutContent content) {
-    if (_initialized) return;
-    _initialized = true;
-    for (final row in content.rows) {
-      _rows.add(_RowData(
-        id: row.id,
-        blocks: row.blocks.map(_BlockData.fromBlock).toList(),
-      ));
+  /// Синхронизирует контроллеры с новым набором блоков из cubit.
+  void _syncControllers(AboutEditorState state) {
+    final allBlockIds = {
+      for (final row in state.rows)
+        for (final b in row.blocks)
+          if (b.type != AboutBlockType.image) b.id,
+    };
+
+    // Удаляем контроллеры удалённых блоков
+    _controllers.keys
+        .where((id) => !allBlockIds.contains(id))
+        .toList()
+        .forEach((id) {
+      _controllers.remove(id)!.dispose();
+    });
+
+    // Создаём контроллеры для новых блоков
+    for (final id in allBlockIds) {
+      _controllers.putIfAbsent(id, TextEditingController.new);
     }
   }
 
-  // ── Mutations ──────────────────────────────────────────────────────────────
-
-  void _addNewRow(AboutBlockType type) {
-    setState(() => _rows.add(_RowData.fresh(type)));
-  }
-
-  void _addBlockToRow(int ri, AboutBlockType type) {
-    setState(() => _rows[ri].blocks.add(_BlockData.fresh(type)));
-  }
-
-  void _removeBlock(int ri, int bi) {
-    setState(() {
-      _rows[ri].blocks[bi].dispose();
-      _rows[ri].blocks.removeAt(bi);
-      if (_rows[ri].blocks.isEmpty) _rows.removeAt(ri);
-    });
-  }
-
-  void _removeRow(int ri) {
-    setState(() {
-      for (final b in _rows[ri].blocks) b.dispose();
-      _rows.removeAt(ri);
-    });
-  }
-
-  void _moveRowUp(int i) {
-    if (i <= 0) return;
-    setState(() {
-      final row = _rows.removeAt(i);
-      _rows.insert(i - 1, row);
-    });
-  }
-
-  void _moveRowDown(int i) {
-    if (i >= _rows.length - 1) return;
-    setState(() {
-      final row = _rows.removeAt(i);
-      _rows.insert(i + 1, row);
-    });
-  }
-
-  void _moveBlockLeft(int ri, int bi) {
-    if (bi <= 0) return;
-    setState(() {
-      final b = _rows[ri].blocks.removeAt(bi);
-      _rows[ri].blocks.insert(bi - 1, b);
-    });
-  }
-
-  void _moveBlockRight(int ri, int bi) {
-    if (bi >= _rows[ri].blocks.length - 1) return;
-    setState(() {
-      final b = _rows[ri].blocks.removeAt(bi);
-      _rows[ri].blocks.insert(bi + 1, b);
-    });
-  }
-
-  // ── Image upload ───────────────────────────────────────────────────────────
-
-  Future<void> _pickAndUpload(int ri, int bi) async {
-    final file = await _pickImageFile();
-    if (file == null) return;
-
-    setState(() => _uploading = true);
-    try {
-      final uri = Uri.parse('https://api.cloudinary.com/v1_1/$_kCloudName/image/upload');
-      final req = http.MultipartRequest('POST', uri)
-        ..fields['upload_preset'] = _kPreset
-        ..files.add(http.MultipartFile.fromBytes('file', file.bytes, filename: file.name));
-      final streamed = await req.send();
-      final body = await streamed.stream.bytesToString();
-      if (streamed.statusCode == 200 && mounted) {
-        final json = jsonDecode(body) as Map<String, dynamic>;
-        setState(() => _rows[ri].blocks[bi].imageId = json['public_id'] as String);
-      }
-    } catch (_) {}
-    if (mounted) setState(() => _uploading = false);
-  }
+  // ── File picker ────────────────────────────────────────────────────────────
 
   Future<({Uint8List bytes, String name})?> _pickImageFile() {
     final c = Completer<({Uint8List bytes, String name})?>();
@@ -200,27 +92,21 @@ class _AboutEditorPageState extends State<AboutEditorPage> {
     return c.future;
   }
 
-  // ── Serialize & save ───────────────────────────────────────────────────────
+  Future<void> _pickAndUpload(int ri, int bi) async {
+    final file = await _pickImageFile();
+    if (file == null || !mounted) return;
+    await context.read<AboutEditorCubit>().uploadImage(ri, bi, file.bytes, file.name);
+  }
 
-  AboutContent _buildContent() => AboutContent(
-        rows: _rows
-            .map((r) => AboutRow(
-                  id: r.id,
-                  blocks: r.blocks
-                      .map((b) => AboutBlock(
-                            id: b.id,
-                            type: b.type,
-                            content: b.type == AboutBlockType.image
-                                ? (b.imageId ?? '')
-                                : (b.ctrl?.text.trim() ?? ''),
-                          ))
-                      .toList(),
-                ))
-            .toList(),
-      );
+  // ── Save ───────────────────────────────────────────────────────────────────
 
   void _save() {
-    context.read<AboutCubit>().save(_buildContent());
+    final editorCubit = context.read<AboutEditorCubit>();
+    final textValues = {
+      for (final entry in _controllers.entries) entry.key: entry.value.text,
+    };
+    final content = editorCubit.buildContent(textValues);
+    context.read<AboutCubit>().save(content);
     context.go('/about');
   }
 
@@ -230,40 +116,53 @@ class _AboutEditorPageState extends State<AboutEditorPage> {
   Widget build(BuildContext context) {
     return BlocConsumer<AboutCubit, AboutState>(
       listener: (context, state) {
-        if (state is AboutLoaded) _initFrom(state.content);
+        if (state is AboutLoaded) {
+          context.read<AboutEditorCubit>().initFrom(state.content);
+        }
       },
-      builder: (context, state) {
-        if (state is AboutLoaded) _initFrom(state.content);
-        final saving = state is AboutSaving;
-        final busy = saving || _uploading;
+      builder: (context, aboutState) {
+        if (aboutState is AboutLoaded) {
+          context.read<AboutEditorCubit>().initFrom(aboutState.content);
+        }
 
-        return Column(
-          children: [
-            _Header(busy: busy, onSave: _save, onBack: () => context.go('/about')),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _Sidebar(),
-                  const VerticalDivider(width: 1, thickness: 1, color: _kBorder),
-                  Expanded(
-                    child: _Canvas(
-                      rows: _rows,
-                      onDropNew: _addNewRow,
-                      onDropToRow: _addBlockToRow,
-                      onRemoveRow: _removeRow,
-                      onMoveRowUp: _moveRowUp,
-                      onMoveRowDown: _moveRowDown,
-                      onRemoveBlock: _removeBlock,
-                      onMoveBlockLeft: _moveBlockLeft,
-                      onMoveBlockRight: _moveBlockRight,
-                      onPickImage: _pickAndUpload,
-                    ),
+        return BlocConsumer<AboutEditorCubit, AboutEditorState>(
+          listener: (_, editorState) => _syncControllers(editorState),
+          builder: (context, editorState) {
+            _syncControllers(editorState);
+            final saving = aboutState is AboutSaving;
+            final busy = saving || editorState.uploading;
+            final cubit = context.read<AboutEditorCubit>();
+
+            return Column(
+              children: [
+                _Header(busy: busy, onSave: _save, onBack: () => context.go('/about')),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _Sidebar(),
+                      const VerticalDivider(width: 1, thickness: 1, color: _kBorder),
+                      Expanded(
+                        child: _Canvas(
+                          rows: editorState.rows,
+                          controllers: _controllers,
+                          onDropNew: cubit.addRow,
+                          onDropToRow: cubit.addBlockToRow,
+                          onRemoveRow: cubit.removeRow,
+                          onMoveRowUp: cubit.moveRowUp,
+                          onMoveRowDown: cubit.moveRowDown,
+                          onRemoveBlock: cubit.removeBlock,
+                          onMoveBlockLeft: cubit.moveBlockLeft,
+                          onMoveBlockRight: cubit.moveBlockRight,
+                          onPickImage: _pickAndUpload,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -403,6 +302,7 @@ class _SidebarChip extends StatelessWidget {
 class _Canvas extends StatelessWidget {
   const _Canvas({
     required this.rows,
+    required this.controllers,
     required this.onDropNew,
     required this.onDropToRow,
     required this.onRemoveRow,
@@ -414,7 +314,8 @@ class _Canvas extends StatelessWidget {
     required this.onPickImage,
   });
 
-  final List<_RowData> rows;
+  final List<AboutEditorRow> rows;
+  final Map<String, TextEditingController> controllers;
   final ValueChanged<AboutBlockType> onDropNew;
   final void Function(int ri, AboutBlockType type) onDropToRow;
   final ValueChanged<int> onRemoveRow;
@@ -438,6 +339,7 @@ class _Canvas extends StatelessWidget {
               row: rows[i],
               rowIndex: i,
               rowCount: rows.length,
+              controllers: controllers,
               onDrop: (type) => onDropToRow(i, type),
               onRemove: () => onRemoveRow(i),
               onMoveUp: () => onMoveRowUp(i),
@@ -464,6 +366,7 @@ class _RowCard extends StatelessWidget {
     required this.row,
     required this.rowIndex,
     required this.rowCount,
+    required this.controllers,
     required this.onDrop,
     required this.onRemove,
     required this.onMoveUp,
@@ -474,9 +377,10 @@ class _RowCard extends StatelessWidget {
     required this.onPickImage,
   });
 
-  final _RowData row;
+  final AboutEditorRow row;
   final int rowIndex;
   final int rowCount;
+  final Map<String, TextEditingController> controllers;
   final ValueChanged<AboutBlockType> onDrop;
   final VoidCallback onRemove;
   final VoidCallback onMoveUp;
@@ -503,7 +407,6 @@ class _RowCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row toolbar
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
                 child: Row(
@@ -521,7 +424,6 @@ class _RowCard extends StatelessWidget {
                 ),
               ),
               const Divider(height: 1, color: Color(0xFFF3F4F6)),
-              // Blocks
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: IntrinsicHeight(
@@ -533,6 +435,7 @@ class _RowCard extends StatelessWidget {
                         Expanded(
                           child: _BlockCard(
                             block: row.blocks[bi],
+                            controller: controllers[row.blocks[bi].id],
                             blockIndex: bi,
                             blockCount: row.blocks.length,
                             onDelete: () => onRemoveBlock(bi),
@@ -560,6 +463,7 @@ class _BlockCard extends StatelessWidget {
   const _BlockCard({
     super.key,
     required this.block,
+    required this.controller,
     required this.blockIndex,
     required this.blockCount,
     required this.onDelete,
@@ -568,7 +472,8 @@ class _BlockCard extends StatelessWidget {
     this.onMoveRight,
   });
 
-  final _BlockData block;
+  final AboutEditorBlock block;
+  final TextEditingController? controller;
   final int blockIndex;
   final int blockCount;
   final VoidCallback onDelete;
@@ -599,7 +504,7 @@ class _BlockCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          _BlockContent(block: block, onPickImage: onPickImage),
+          _BlockContent(block: block, controller: controller, onPickImage: onPickImage),
         ],
       ),
     );
@@ -609,8 +514,15 @@ class _BlockCard extends StatelessWidget {
 // ─── Block content ────────────────────────────────────────────────────────────
 
 class _BlockContent extends StatelessWidget {
-  const _BlockContent({super.key, required this.block, required this.onPickImage});
-  final _BlockData block;
+  const _BlockContent({
+    super.key,
+    required this.block,
+    required this.controller,
+    required this.onPickImage,
+  });
+
+  final AboutEditorBlock block;
+  final TextEditingController? controller;
   final VoidCallback onPickImage;
 
   InputDecoration _dec(String hint) => InputDecoration(
@@ -630,20 +542,20 @@ class _BlockContent extends StatelessWidget {
     switch (block.type) {
       case AboutBlockType.heading:
         return TextFormField(
-          controller: block.ctrl,
+          controller: controller,
           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           decoration: _dec('Заголовок...'),
           maxLines: 1,
         );
       case AboutBlockType.text:
         return TextFormField(
-          controller: block.ctrl,
+          controller: controller,
           decoration: _dec('Текст...'),
           maxLines: 5,
           minLines: 3,
         );
       case AboutBlockType.image:
-        final id = block.imageId ?? '';
+        final id = block.imageId;
         if (id.isNotEmpty) {
           return Stack(
             children: [
@@ -696,7 +608,7 @@ class _BlockContent extends StatelessWidget {
   }
 }
 
-// ─── Drop zone (new row) ─────────────────────────────────────────────────────
+// ─── Drop zone ────────────────────────────────────────────────────────────────
 
 class _DropZone extends StatelessWidget {
   const _DropZone({required this.onDrop});
@@ -713,10 +625,7 @@ class _DropZone extends StatelessWidget {
           height: 72,
           decoration: BoxDecoration(
             color: over ? _kBrandMedium : const Color(0xFFFAFAFA),
-            border: Border.all(
-              color: over ? _kBrand : _kBorder,
-              width: over ? 2 : 1,
-            ),
+            border: Border.all(color: over ? _kBrand : _kBorder, width: over ? 2 : 1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(

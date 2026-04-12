@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intersperse/intersperse.dart';
 import 'package:shop/cart/presentation/bloc/cart_cubit.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/common/cloudinary.dart';
 import 'package:shop/common/ui/app_shell.dart';
 import 'package:shop/product/presentation/bloc/model/view_product.dart';
@@ -113,33 +114,34 @@ class _ProductGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = products.slices(4);
+    final cols = context.responsive<int>(mobile: 2, tablet: 3, desktop: 4);
+    final rows = products.slices(cols);
 
     return Column(
       children: rows
           .map((row) => Padding(
                 padding: const EdgeInsets.only(bottom: 24),
-                child: _buildRow(context, row),
+                child: _buildRow(context, row, cols),
               ))
           .toList(),
     );
   }
 
-  Widget _buildRow(BuildContext context, List<ViewProduct> products) {
+  Widget _buildRow(BuildContext context, List<ViewProduct> row, int cols) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...products
+        ...row
             .map<Widget>((p) => Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 20),
+                    padding: const EdgeInsets.only(right: 12),
                     child: _ProductCard(product: p),
                   ),
                 ))
             .intersperse(const SizedBox()),
-        if (products.length < 4)
+        if (row.length < cols)
           ...List.generate(
-            4 - products.length,
+            cols - row.length,
             (_) => const Expanded(child: SizedBox()),
           ),
       ],
@@ -189,7 +191,6 @@ class _ProductCardState extends State<_ProductCard> {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: double.infinity,
-                  height: 240,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -197,7 +198,10 @@ class _ProductCardState extends State<_ProductCard> {
                       ? (Matrix4.identity()..translate(0.0, -3.0))
                       : Matrix4.identity(),
                   clipBehavior: Clip.hardEdge,
-                  child: _ImageCarousel(imageIds: widget.product.imageIds),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: _ImageCarousel(imageIds: widget.product.imageIds),
+                  ),
                 ),
                 // Кнопка корзины / счётчик
                 Positioned(
@@ -416,7 +420,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
             itemBuilder: (_, i) => Image.network(
               cloudinaryUrl(widget.imageIds[i], size: CloudinarySize.medium),
               width: double.infinity,
-              height: 240,
+              height: double.infinity,
               fit: BoxFit.cover,
               loadingBuilder: (_, child, progress) => progress == null
                   ? child

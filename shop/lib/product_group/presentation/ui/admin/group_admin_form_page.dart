@@ -1,22 +1,19 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 import 'package:shop/admin/ui/admin_colors.dart';
+import 'package:shop/common/abstract_injector.dart';
+import 'package:shop/common/cloudinary.dart';
 import 'package:shop/product/presentation/bloc/admin/product_admin_cubit.dart';
 import 'package:shop/product/presentation/bloc/admin/product_admin_state.dart';
 import 'package:shop/product_group/domain/model/product_group.dart';
 import 'package:shop/product_group/presentation/bloc/admin/group_admin_cubit.dart';
 import 'package:shop/product_group/presentation/bloc/admin/group_admin_state.dart';
 import 'package:web/web.dart' as web;
-
-const _cloudinaryCloud = 'db7wmn9yi';
-const _cloudinaryPreset = 'what_kniting_products';
 
 class GroupAdminFormPage extends StatefulWidget {
   const GroupAdminFormPage({super.key, this.groupId});
@@ -71,28 +68,13 @@ class _GroupAdminFormPageState extends State<GroupAdminFormPage> {
     setState(() { _uploading = true; });
 
     try {
-      final uri = Uri.parse('https://api.cloudinary.com/v1_1/$_cloudinaryCloud/image/upload');
-      final request = http.MultipartRequest('POST', uri)
-        ..fields['upload_preset'] = _cloudinaryPreset
-        ..files.add(http.MultipartFile.fromBytes('file', picked.bytes, filename: picked.name));
-
-      final streamed = await request.send();
-      final body = await streamed.stream.bytesToString();
-
-      if (streamed.statusCode == 200) {
-        final json = jsonDecode(body) as Map<String, dynamic>;
-        final url = json['secure_url'] as String;
-        if (mounted) setState(() { _imageUrl = url; _uploading = false; });
-      } else {
-        if (mounted) setState(() => _uploading = false);
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ошибка загрузки изображения')),
-        );
-      }
+      final cloudinary = Injector.of(context).cloudinaryService;
+      final publicId = await cloudinary.uploadImage(picked.bytes, picked.name);
+      if (mounted) setState(() { _imageUrl = cloudinaryUrl(publicId); _uploading = false; });
     } catch (e) {
       if (mounted) setState(() => _uploading = false);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e')),
+        SnackBar(content: Text('Ошибка загрузки: $e')),
       );
     }
   }

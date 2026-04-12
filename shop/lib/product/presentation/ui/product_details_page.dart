@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/common/cloudinary.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
@@ -18,126 +19,177 @@ class ProductDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ProductDetailsCubit, ProductDetailsState>(
       builder: (context, state) {
-          if (state.product == null) {
-            return const Center(
-              child: Text('Не удалось загрузить информацию о товаре!'),
-            );
-          }
+        if (state.product == null) {
+          return const Center(
+            child: Text('Не удалось загрузить информацию о товаре!'),
+          );
+        }
 
-          final product = state.product!;
-          final cartCubit = context.read<CartCubit>();
-          return ListView(
-            children: [
-              ContentBox(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Breadcrumb
-                    _Breadcrumb(
-                      title: product.title.isNotEmpty
-                          ? product.title
-                          : 'Товар #${product.id + 1}',
-                      groupId: groupId,
-                      groupTitle: groupTitle,
-                    ),
-                    const Gap(24),
-                    // Product layout
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Image carousel
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: _DetailsCarousel(imageIds: product.imageIds),
-                        ),
-                        const Gap(48),
-                        // Info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                product.title.isNotEmpty
-                                    ? product.title
-                                    : 'Товар #${product.id + 1}',
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF111827),
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const Gap(16),
-                              Text(
-                                product.description.isNotEmpty
-                                    ? product.description
-                                    : 'Очаровательный вязаный медвежонок Тедди, созданный с любовью и заботой! Эта уникальная игрушка станет лучшим другом для вашего ребёнка или трогательным подарком для близкого человека.',
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  color: Color(0xFF4B5563),
-                                  height: 1.6,
-                                ),
-                              ),
-                              const Gap(32),
-                              const Divider(color: Color(0xFFE5E7EB)),
-                              const Gap(24),
-                              BlocBuilder<CartCubit, CartState>(
-                                builder: (context, cartState) {
-                                  final cartItem = cartState.items
-                                      .where((i) => i.product.id == product.id)
-                                      .firstOrNull;
+        final product = state.product!;
+        final cartCubit = context.read<CartCubit>();
+        final mobile = context.isMobile;
 
-                                  if (cartItem != null) {
-                                    return Row(
-                                      children: [
-                                        SizedBox(
-                                          height: 48,
-                                          child: _DetailsQuantityRow(
-                                            quantity: cartItem.quantity,
-                                            onDecrement: () => cartCubit.decrement(product.id),
-                                            onIncrement: () => cartCubit.increment(product.id),
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }
+        return ListView(
+          children: [
+            ContentBox(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Breadcrumb(
+                    title: product.title.isNotEmpty
+                        ? product.title
+                        : 'Товар #${product.id + 1}',
+                    groupId: groupId,
+                    groupTitle: groupTitle,
+                  ),
+                  const Gap(24),
+                  // На мобиле — Column, на десктопе — Row
+                  if (mobile)
+                    _MobileLayout(product: product, cartCubit: cartCubit)
+                  else
+                    _DesktopLayout(product: product, cartCubit: cartCubit),
+                  const Gap(48),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 
-                                  return Row(
-                                    children: [
-                                      SizedBox(
-                                        height: 48,
-                                        child: FilledButton.icon(
-                                          onPressed: () => cartCubit.add(product),
-                                          icon: const Icon(Icons.add_shopping_cart, size: 18),
-                                          label: const Text(
-                                            'Добавить в корзину',
-                                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                                          ),
-                                          style: FilledButton.styleFrom(
-                                            backgroundColor: const Color(0xFF7C3AED),
-                                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(10),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Gap(48),
-                  ],
+// =============================================================================
+// Desktop: карусель слева + инфо справа
+// =============================================================================
+
+class _DesktopLayout extends StatelessWidget {
+  const _DesktopLayout({required this.product, required this.cartCubit});
+
+  final dynamic product;
+  final CartCubit cartCubit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: _DetailsCarousel(imageIds: product.imageIds, size: 480),
+        ),
+        const Gap(48),
+        Expanded(child: _ProductInfo(product: product, cartCubit: cartCubit)),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// Mobile: карусель сверху, инфо снизу, на всю ширину
+// =============================================================================
+
+class _MobileLayout extends StatelessWidget {
+  const _MobileLayout({required this.product, required this.cartCubit});
+
+  final dynamic product;
+  final CartCubit cartCubit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: _DetailsCarousel(imageIds: product.imageIds),
+        ),
+        const Gap(20),
+        _ProductInfo(product: product, cartCubit: cartCubit),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// Общий блок с инфо товара
+// =============================================================================
+
+class _ProductInfo extends StatelessWidget {
+  const _ProductInfo({required this.product, required this.cartCubit});
+
+  final dynamic product;
+  final CartCubit cartCubit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          product.title.isNotEmpty
+              ? product.title
+              : 'Товар #${product.id + 1}',
+          style: TextStyle(
+            fontSize: context.isMobile ? 22 : 28,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF111827),
+            letterSpacing: -0.5,
+          ),
+        ),
+        const Gap(16),
+        Text(
+          product.description.isNotEmpty
+              ? product.description
+              : 'Очаровательный вязаный медвежонок Тедди, созданный с любовью и заботой! Эта уникальная игрушка станет лучшим другом для вашего ребёнка или трогательным подарком для близкого человека.',
+          style: const TextStyle(
+            fontSize: 15,
+            color: Color(0xFF4B5563),
+            height: 1.6,
+          ),
+        ),
+        const Gap(32),
+        const Divider(color: Color(0xFFE5E7EB)),
+        const Gap(24),
+        BlocBuilder<CartCubit, CartState>(
+          builder: (context, cartState) {
+            final cartItem = cartState.items
+                .where((i) => i.product.id == product.id)
+                .firstOrNull;
+
+            if (cartItem != null) {
+              return SizedBox(
+                height: 48,
+                child: _DetailsQuantityRow(
+                  quantity: cartItem.quantity,
+                  onDecrement: () => cartCubit.decrement(product.id),
+                  onIncrement: () => cartCubit.increment(product.id),
+                ),
+              );
+            }
+
+            return SizedBox(
+              height: 48,
+              width: context.isMobile ? double.infinity : null,
+              child: FilledButton.icon(
+                onPressed: () => cartCubit.add(product),
+                icon: const Icon(Icons.add_shopping_cart, size: 18),
+                label: const Text(
+                  'Добавить в корзину',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF7C3AED),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
-            ],
-          );
-        },
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -205,10 +257,14 @@ class _Btn extends StatelessWidget {
 }
 
 // =============================================================================
+// Карусель изображений
+// =============================================================================
 
 class _DetailsCarousel extends StatefulWidget {
-  const _DetailsCarousel({required this.imageIds});
+  const _DetailsCarousel({required this.imageIds, this.size});
   final List<String> imageIds;
+  /// Фиксированный размер для десктопа; null = full width для мобиля
+  final double? size;
 
   @override
   State<_DetailsCarousel> createState() => _DetailsCarouselState();
@@ -226,111 +282,119 @@ class _DetailsCarouselState extends State<_DetailsCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.imageIds.isEmpty) {
-      return Container(
-        width: 480,
-        height: 420,
-        color: const Color(0xFFF3F4F6),
-        child: const Icon(Icons.image_outlined, size: 64, color: Color(0xFFD1D5DB)),
-      );
-    }
+    final s = widget.size;
+    final placeholder = s != null
+        ? SizedBox(width: s, height: s)
+        : AspectRatio(aspectRatio: 1, child: const SizedBox.expand());
 
-    return SizedBox(
-      width: 480,
-      height: 420,
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _controller,
-            onPageChanged: (i) => setState(() => _current = i),
-            itemCount: widget.imageIds.length,
-            itemBuilder: (_, i) => Image.network(
-              cloudinaryUrl(widget.imageIds[i], size: CloudinarySize.medium),
-              width: 480,
-              height: 420,
-              fit: BoxFit.cover,
-              loadingBuilder: (_, child, progress) => progress == null
-                  ? child
-                  : Container(
-                      width: 480,
-                      height: 420,
-                      color: const Color(0xFFF3F4F6),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFFD1D5DB),
-                        ),
-                      ),
-                    ),
-              errorBuilder: (_, __, ___) => Container(
-                width: 480,
-                height: 420,
+    if (widget.imageIds.isEmpty) {
+      return s != null
+          ? Container(
+              width: s,
+              height: s,
+              color: const Color(0xFFF3F4F6),
+              child: const Icon(Icons.image_outlined, size: 64, color: Color(0xFFD1D5DB)),
+            )
+          : AspectRatio(
+              aspectRatio: 1,
+              child: Container(
                 color: const Color(0xFFF3F4F6),
                 child: const Icon(Icons.image_outlined, size: 64, color: Color(0xFFD1D5DB)),
               ),
+            );
+    }
+
+    Widget carousel = Stack(
+      children: [
+        PageView.builder(
+          controller: _controller,
+          onPageChanged: (i) => setState(() => _current = i),
+          itemCount: widget.imageIds.length,
+          itemBuilder: (_, i) => Image.network(
+            cloudinaryUrl(widget.imageIds[i], size: CloudinarySize.medium),
+            width: double.infinity,
+            height: double.infinity,
+            fit: BoxFit.cover,
+            loadingBuilder: (_, child, progress) => progress == null
+                ? child
+                : Container(
+                    color: const Color(0xFFF3F4F6),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFFD1D5DB),
+                      ),
+                    ),
+                  ),
+            errorBuilder: (_, __, ___) => Container(
+              color: const Color(0xFFF3F4F6),
+              child: const Icon(Icons.image_outlined, size: 64, color: Color(0xFFD1D5DB)),
             ),
           ),
-          // Стрелки навигации
-          if (widget.imageIds.length > 1) ...[
-            Positioned(
-              left: 8,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: _ArrowButton(
-                  icon: Icons.chevron_left,
-                  onTap: _current > 0
-                      ? () => _controller.previousPage(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                          )
-                      : null,
-                ),
+        ),
+        if (widget.imageIds.length > 1) ...[
+          Positioned(
+            left: 8,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _ArrowButton(
+                icon: Icons.chevron_left,
+                onTap: _current > 0
+                    ? () => _controller.previousPage(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                        )
+                    : null,
               ),
             ),
-            Positioned(
-              right: 8,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: _ArrowButton(
-                  icon: Icons.chevron_right,
-                  onTap: _current < widget.imageIds.length - 1
-                      ? () => _controller.nextPage(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                          )
-                      : null,
-                ),
+          ),
+          Positioned(
+            right: 8,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _ArrowButton(
+                icon: Icons.chevron_right,
+                onTap: _current < widget.imageIds.length - 1
+                    ? () => _controller.nextPage(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                        )
+                    : null,
               ),
             ),
-            // Точки
-            Positioned(
-              bottom: 12,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(widget.imageIds.length, (i) {
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: _current == i ? 20 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: _current == i
-                          ? Colors.white
-                          : Colors.white.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  );
-                }),
-              ),
+          ),
+          Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.imageIds.length, (i) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: _current == i ? 20 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: _current == i
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              }),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
+
+    if (s != null) {
+      return SizedBox(width: s, height: s, child: carousel);
+    }
+    return AspectRatio(aspectRatio: 1, child: carousel);
   }
 }
 

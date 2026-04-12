@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shop/about/data/repository/firebase_about_repository.dart';
+import 'package:shop/common/services/cloudinary_service.dart';
 import 'package:shop/firebase_options.dart';
 import 'package:shop/news/data/repository/firebase_news_repository.dart';
 import 'package:shop/product/data/repository/firebase_product_repository.dart';
@@ -35,5 +36,6 @@ class RemoteInjector extends AbstractInjector {
     productGroupRepository = FirebaseProductGroupRepository();
     newsRepository = FirebaseNewsRepository();
     aboutRepository = FirebaseAboutRepository();
+    cloudinaryService = const CloudinaryService();
   }
 }

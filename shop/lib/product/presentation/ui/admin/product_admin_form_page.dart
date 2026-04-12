@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 import 'package:shop/common/cloudinary.dart';
+import 'package:shop/common/abstract_injector.dart';
 import 'package:shop/product/domain/model/product.dart';
 import 'package:shop/product/presentation/bloc/admin/product_admin_cubit.dart';
 import 'package:shop/product/presentation/bloc/admin/product_admin_state.dart';
@@ -15,9 +14,6 @@ import 'package:shop/product_group/domain/model/product_group.dart';
 import 'package:shop/product_group/presentation/bloc/admin/group_admin_cubit.dart';
 import 'package:shop/product_group/presentation/bloc/admin/group_admin_state.dart';
 import 'package:web/web.dart' as web;
-
-const _cloudinaryCloud = 'db7wmn9yi';
-const _cloudinaryPreset = 'what_kniting_products';
 
 class ProductAdminFormPage extends StatefulWidget {
   const ProductAdminFormPage({super.key, this.productId});
@@ -84,28 +80,15 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
       _uploadingTotal = picked.length;
     });
 
-    final uri = Uri.parse('https://api.cloudinary.com/v1_1/$_cloudinaryCloud/image/upload');
+    final cloudinary = Injector.of(context).cloudinaryService;
     int failed = 0;
 
     for (final file in picked) {
       if (!mounted) break;
       setState(() => _uploadingCurrent++);
       try {
-        final request = http.MultipartRequest('POST', uri)
-          ..fields['upload_preset'] = _cloudinaryPreset
-          ..fields['eager'] = 'w_200,h_200,c_fill,q_auto,f_auto|w_800,q_auto,f_auto'
-          ..files.add(http.MultipartFile.fromBytes('file', file.bytes, filename: file.name));
-
-        final streamed = await request.send();
-        final body = await streamed.stream.bytesToString();
-
-        if (streamed.statusCode == 200) {
-          final json = jsonDecode(body) as Map<String, dynamic>;
-          final publicId = json['public_id'] as String;
-          if (mounted) setState(() => _imageIds.add(publicId));
-        } else {
-          failed++;
-        }
+        final publicId = await cloudinary.uploadImage(file.bytes, file.name);
+        if (mounted) setState(() => _imageIds.add(publicId));
       } catch (_) {
         failed++;
       }
@@ -171,49 +154,13 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final productCubit = context.read<ProductAdminCubit>();
-    final groupCubit = context.read<GroupAdminCubit>();
-    final groupState = groupCubit.state;
-    final groups = groupState is GroupAdminLoaded ? groupState.groups : <ProductGroup>[];
-
-    if (_isNew) {
-      final product = await productCubit.create(
-        title: _titleCtrl.text.trim(),
-        description: _descCtrl.text.trim(),
-        imageIds: _imageIds,
-      );
-      if (_selectedGroupId != null) {
-        final group = groups.firstWhereOrNull((g) => g.id == _selectedGroupId);
-        if (group != null && !group.productIds.contains(product.id)) {
-          await groupCubit.update(group.copyWith(
-            productIds: [...group.productIds, product.id],
-          ));
-        }
-      }
-    } else {
-      await productCubit.update(_original!.copyWith(
-        title: _titleCtrl.text.trim(),
-        description: _descCtrl.text.trim(),
-        imageIds: _imageIds,
-      ));
-
-      final oldGroup = groups.firstWhereOrNull((g) => g.productIds.contains(_original!.id));
-      if (oldGroup?.id != _selectedGroupId) {
-        if (oldGroup != null) {
-          await groupCubit.update(oldGroup.copyWith(
-            productIds: oldGroup.productIds.where((id) => id != _original!.id).toList(),
-          ));
-        }
-        if (_selectedGroupId != null) {
-          final newGroup = groups.firstWhereOrNull((g) => g.id == _selectedGroupId);
-          if (newGroup != null && !newGroup.productIds.contains(_original!.id)) {
-            await groupCubit.update(newGroup.copyWith(
-              productIds: [...newGroup.productIds, _original!.id],
-            ));
-          }
-        }
-      }
-    }
+    await context.read<ProductAdminCubit>().saveWithGroup(
+      original: _original,
+      title: _titleCtrl.text.trim(),
+      description: _descCtrl.text.trim(),
+      imageIds: _imageIds,
+      selectedGroupId: _selectedGroupId,
+    );
 
     if (mounted) context.go('/products');
   }
