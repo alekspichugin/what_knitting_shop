@@ -27,7 +27,9 @@ class ProductGroupCubit extends Cubit<ProductGroupState> {
       return;
     }
 
-    final products = await _productRepository.get(ids: group.productIds);
+    final products = group.productIds.isEmpty
+        ? <Product>[]
+        : await _productRepository.get(ids: group.productIds);
 
     emit(ProductGroupState(
       groupId: _groupId,
