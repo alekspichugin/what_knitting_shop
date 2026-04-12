@@ -9,8 +9,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _loginCtrl = TextEditingController(text: 'admin@shop.ru');
-  final _passCtrl = TextEditingController(text: 'greedisgood');
+  final _loginCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
   String? _loginError;

@@ -93,6 +93,7 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
       try {
         final request = http.MultipartRequest('POST', uri)
           ..fields['upload_preset'] = _cloudinaryPreset
+          ..fields['eager'] = 'w_200,h_200,c_fill,q_auto,f_auto|w_800,q_auto,f_auto'
           ..files.add(http.MultipartFile.fromBytes('file', file.bytes, filename: file.name));
 
         final streamed = await request.send();

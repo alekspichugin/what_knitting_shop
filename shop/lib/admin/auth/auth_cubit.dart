@@ -5,11 +5,7 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit() : super(AuthInitial());
 
   void login(String login, String password) {
-    if (login == 'admin' && password == 'admin') {
-      emit(AuthAuthenticated());
-    } else {
-      emit(AuthError('Неверный логин или пароль'));
-    }
+    emit(AuthError('Неверный логин или пароль'));
   }
 
   void logout() => emit(AuthInitial());

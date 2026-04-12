@@ -18,6 +18,16 @@ class ProductGroupPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ProductGroupCubit, ProductGroupState>(
       builder: (context, state) {
+        // Предзагружаем thumbnail-ы как только список пришёл
+        for (final p in state.products) {
+          if (p.imageId.isNotEmpty) {
+            precacheImage(
+              NetworkImage(cloudinaryUrl(p.imageId, size: CloudinarySize.thumbnail)),
+              context,
+            );
+          }
+        }
+
         return state.products.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : ListView(
