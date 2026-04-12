@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Client (Flutter Web)",
+      "runtimeExecutable": "flutter",
+      "runtimeArgs": ["run", "-t", "lib/main.dart", "-d", "chrome"],
+      "port": 53341
+    },
+    {
+      "name": "Admin (Flutter Web)",
+      "runtimeExecutable": "flutter",
+      "runtimeArgs": ["run", "-t", "lib/main_admin.dart", "-d", "chrome"],
+      "port": 53342
+    }
+  ]
+}

@@ -2,7 +2,9 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intersperse/intersperse.dart';
+import 'package:shop/common/cloudinary.dart';
 import 'package:shop/product/presentation/bloc/list/product_list_cubit.dart';
 import 'package:shop/product/presentation/bloc/model/view_product.dart';
 import 'package:shop/routes.dart';
@@ -52,7 +54,7 @@ class _State extends State<ProductListPage> {
   Widget _buildProductCard(BuildContext context, ViewProduct product) {
     return Expanded(
         child: InkWell(
-          onTap: () => Navigator.of(context).pushNamed(kProductDetailsRoute, arguments: product.id),
+          onTap: () => context.push('$kProductDetailsRoute/${product.id}'),
           child: SizedBox(
               width: double.infinity,
               height: 300,
@@ -67,10 +69,12 @@ class _State extends State<ProductListPage> {
                             shape: BoxShape.rectangle,
                             borderRadius: BorderRadius.all(Radius.circular(16))
                         ),
-                        child: Image.asset(
-                          'assets/graphic/${product.imageAsset}',
-                          fit: BoxFit.cover,
-                        ),
+                        child: product.imageId.isNotEmpty
+                            ? Image.network(
+                                cloudinaryUrl(product.imageId, size: CloudinarySize.thumbnail),
+                                fit: BoxFit.cover,
+                              )
+                            : const SizedBox(),
                       )
                   ),
                   Gap(6),

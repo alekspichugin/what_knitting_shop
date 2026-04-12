@@ -1,8 +1,10 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:shop/common/abstract_state.dart';
+import 'package:shop/product/domain/abstract_product_repository.dart';
+import 'package:shop/product/domain/model/product.dart';
+import 'package:shop/product/presentation/bloc/model/view_product.dart';
 
 part 'product_list_state.dart';
 
@@ -11,33 +13,29 @@ class ProductListCubit extends Cubit<ProductListState> {
   static const kCTag = 'ProductListCubit';
 
   ProductListCubit(
-      this._authenticationCubit,
-      ) : super(ProductListState()) {
-    _authenticationCubitSubscription = _authenticationCubit.stream
-        .listen(_onAuthenticationStateChanged);
+      this._productRepository,
+      ) : super(ProductListState());
+
+  final AbstractProductRepository _productRepository;
+
+  List<ViewProduct> _cachedProducts = <ViewProduct>[];
+
+  Future load() async {
+    final products = await _productRepository.get();
+
+    _cachedProducts = products.map(_mapToViewProduct).toList();
+
+    emit(ProductListState(
+      products: _cachedProducts
+    ));
   }
 
-  final AuthenticationCubit _authenticationCubit;
-
-  bool _needWarnUser = true;
-
-  StreamSubscription? _isTimeCorrectChangeSubscription;
-  StreamSubscription? _authenticationCubitSubscription;
-
-  // ===========================================================================
-  // Cubit<CheckTimeAbstractState>
-  // ===========================================================================
-
-  @override
-  Future<void> close() {
-    _isTimeCorrectChangeSubscription?.cancel();
-    _isTimeCorrectChangeSubscription = null;
-
-    _authenticationCubitSubscription?.cancel();
-    _authenticationCubitSubscription = null;
-    return super.close();
+  ViewProduct _mapToViewProduct(Product input) {
+    return ViewProduct(
+        id: input.id,
+        imageIds: input.imageIds,
+        title: input.title,
+        description: input.description
+    );
   }
-
-  // ===========================================================================
-
 }

@@ -1,17 +1,17 @@
-part of 'product_list_cubit.dart';
+part of 'product_details_cubit.dart';
 
-class ProductListState extends AbstractState {
-  const ProductListState({
-    List<ViewProduct>? products,
+class ProductDetailsState extends AbstractState {
+  const ProductDetailsState({
+    this.product,
     super.throwable,
     super.isCritical,
-  }) : products = products ?? const <ViewProduct>[];
+  });
 
-  final List<ViewProduct> products;
+  final ViewProduct? product;
 
   @override
   List get props => [
-    products,
+    product,
     ...super.props
   ];
 }

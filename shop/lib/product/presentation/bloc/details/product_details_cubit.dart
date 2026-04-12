@@ -1,40 +1,43 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:shop/common/abstract_state.dart';
-import 'package:shop/product/data/repository/product_repository.dart';
+import 'package:shop/product/domain/abstract_product_repository.dart';
 import 'package:shop/product/domain/model/product.dart';
 import 'package:shop/product/presentation/bloc/model/view_product.dart';
 
-part 'product_list_state.dart';
+part 'product_details_state.dart';
 
-class ProductListCubit extends Cubit<ProductListState> {
+class ProductDetailsCubit extends Cubit<ProductDetailsState> {
 
-  static const kCTag = 'ProductListCubit';
+  static const kCTag = 'ProductDetailsCubit';
 
-  ProductListCubit(
+  ProductDetailsCubit(
       this._productRepository,
-      ) : super(ProductListState());
+      this._productId
+      ) : super(ProductDetailsState());
 
-  final ProductRepository _productRepository;
+  final AbstractProductRepository _productRepository;
+  final int _productId;
 
-  List<ViewProduct> _cachedProducts = <ViewProduct>[];
+  ViewProduct? _cachedProduct;
 
   Future load() async {
-    final products = await _productRepository.get();
+    final products = await _productRepository.get(ids: [_productId]);
 
-    _cachedProducts = products.map(_mapToViewProduct).toList();
+    _cachedProduct = _mapToViewProduct(products.firstOrNull);
 
-    emit(ProductListState(
-      products: _cachedProducts
+    emit(ProductDetailsState(
+      product: _cachedProduct
     ));
   }
 
-  ViewProduct _mapToViewProduct(Product input) {
+  ViewProduct? _mapToViewProduct(Product? input) {
+    if (input == null) return null;
+
     return ViewProduct(
         id: input.id,
-        imageAsset: input.imageAsset,
+        imageIds: input.imageIds,
         title: input.title,
         description: input.description
     );
