@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shop/cart/domain/model/cart_item.dart';
@@ -130,14 +131,13 @@ class _OrderPageState extends State<OrderPage> {
                       ),
                     ),
                     const Gap(32),
-                    // Two-column layout
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Form
-                        Expanded(
-                          flex: 3,
-                          child: _OrderForm(
+                    if (context.isMobile)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _OrderSummary(items: state.items),
+                          const Gap(24),
+                          _OrderForm(
                             formKey: _formKey,
                             firstNameCtrl: _firstNameCtrl,
                             lastNameCtrl: _lastNameCtrl,
@@ -149,15 +149,34 @@ class _OrderPageState extends State<OrderPage> {
                             addressFocus: _addressFocus,
                             cartItems: state.items,
                           ),
-                        ),
-                        const Gap(40),
-                        // Summary
-                        Expanded(
-                          flex: 2,
-                          child: _OrderSummary(items: state.items),
-                        ),
-                      ],
-                    ),
+                        ],
+                      )
+                    else
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: _OrderForm(
+                              formKey: _formKey,
+                              firstNameCtrl: _firstNameCtrl,
+                              lastNameCtrl: _lastNameCtrl,
+                              phoneCtrl: _phoneCtrl,
+                              addressCtrl: _addressCtrl,
+                              firstNameFocus: _firstNameFocus,
+                              lastNameFocus: _lastNameFocus,
+                              phoneFocus: _phoneFocus,
+                              addressFocus: _addressFocus,
+                              cartItems: state.items,
+                            ),
+                          ),
+                          const Gap(40),
+                          Expanded(
+                            flex: 2,
+                            child: _OrderSummary(items: state.items),
+                          ),
+                        ],
+                      ),
                     const Gap(48),
                   ],
                 ),
@@ -226,29 +245,50 @@ class _OrderForm extends StatelessWidget {
                   ),
                 ),
                 const Gap(20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _Field(
+                if (context.isMobile)
+                  Column(
+                    children: [
+                      _Field(
                         controller: firstNameCtrl,
                         focusNode: firstNameFocus,
                         label: 'Имя',
                         hint: 'Введите имя',
                         validator: _required,
                       ),
-                    ),
-                    const Gap(16),
-                    Expanded(
-                      child: _Field(
+                      const Gap(12),
+                      _Field(
                         controller: lastNameCtrl,
                         focusNode: lastNameFocus,
                         label: 'Фамилия',
                         hint: 'Введите фамилию',
                         validator: _required,
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _Field(
+                          controller: firstNameCtrl,
+                          focusNode: firstNameFocus,
+                          label: 'Имя',
+                          hint: 'Введите имя',
+                          validator: _required,
+                        ),
+                      ),
+                      const Gap(16),
+                      Expanded(
+                        child: _Field(
+                          controller: lastNameCtrl,
+                          focusNode: lastNameFocus,
+                          label: 'Фамилия',
+                          hint: 'Введите фамилию',
+                          validator: _required,
+                        ),
+                      ),
+                    ],
+                  ),
                 const Gap(16),
                 _Field(
                   controller: phoneCtrl,

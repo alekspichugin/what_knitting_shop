@@ -81,24 +81,18 @@ class _GroupsGrid extends StatelessWidget {
 
     return Column(
       children: rows.map((row) {
+        final items = <Widget>[];
+        for (var i = 0; i < row.length; i++) {
+          if (i > 0) items.add(const SizedBox(width: 20));
+          items.add(Expanded(child: _GroupCard(group: row[i])));
+        }
+        for (var i = row.length; i < cols; i++) {
+          items.add(const SizedBox(width: 20));
+          items.add(const Expanded(child: SizedBox()));
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ...row.map((g) => Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 20),
-                  child: _GroupCard(group: g),
-                ),
-              )),
-              if (row.length < cols)
-                ...List.generate(
-                  cols - row.length,
-                  (_) => const Expanded(child: SizedBox()),
-                ),
-            ],
-          ),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: items),
         );
       }).toList(),
     );

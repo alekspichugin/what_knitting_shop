@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shop/about/domain/model/about_content.dart';
 import 'package:shop/about/presentation/bloc/about_cubit.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/common/cloudinary.dart';
 
 class AboutAdminPage extends StatelessWidget {
@@ -37,12 +38,13 @@ class AboutAdminPage extends StatelessWidget {
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
                   ),
                   const Spacer(),
-                  FilledButton.icon(
-                    onPressed: () => context.go(editRoute),
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text('Редактировать'),
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFF7C3AED)),
-                  ),
+                  if (!context.isMobile)
+                    FilledButton.icon(
+                      onPressed: () => context.go(editRoute),
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      label: const Text('Редактировать'),
+                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF7C3AED)),
+                    ),
                 ],
               ),
               const SizedBox(height: 32),
@@ -56,13 +58,15 @@ class AboutAdminPage extends StatelessWidget {
                       const Icon(Icons.article_outlined, size: 48, color: Color(0xFFD1D5DB)),
                       const SizedBox(height: 16),
                       const Text('Страница пустая', style: TextStyle(color: Color(0xFF9CA3AF))),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: () => context.go(editRoute),
-                        icon: const Icon(Icons.edit_outlined, size: 16),
-                        label: const Text('Добавить контент'),
-                        style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF7C3AED)),
-                      ),
+                      if (!context.isMobile) ...[
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => context.go(editRoute),
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('Добавить контент'),
+                          style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF7C3AED)),
+                        ),
+                      ],
                     ],
                   ),
                 )

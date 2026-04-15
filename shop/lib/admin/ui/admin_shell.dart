@@ -71,6 +71,8 @@ class _TopBar extends StatelessWidget {
                 icon: const Icon(Icons.menu, color: Color(0xFF1E1B4B)),
                 onPressed: () => Scaffold.of(ctx).openDrawer(),
                 tooltip: 'Меню',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             )
           else
@@ -95,12 +97,22 @@ class _TopBar extends StatelessWidget {
               ),
             ),
           const Spacer(),
-          TextButton.icon(
-            onPressed: () => AdminAuth.logout(context),
-            icon: const Icon(Icons.logout, size: 18),
-            label: showMenuButton ? const SizedBox.shrink() : const Text('Выйти'),
-            style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
-          ),
+          if (showMenuButton)
+            IconButton(
+              icon: const Icon(Icons.logout, size: 18),
+              onPressed: () => AdminAuth.logout(context),
+              tooltip: 'Выйти',
+              color: Colors.grey[700],
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            )
+          else
+            TextButton.icon(
+              onPressed: () => AdminAuth.logout(context),
+              icon: const Icon(Icons.logout, size: 18),
+              label: const Text('Выйти'),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
+            ),
         ],
       ),
     );

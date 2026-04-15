@@ -157,24 +157,16 @@ class _ProductGrid extends StatelessWidget {
   }
 
   Widget _buildRow(BuildContext context, List<ViewProduct> row, int cols) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ...row
-            .map<Widget>((p) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: _ProductCard(product: p),
-                  ),
-                ))
-            .intersperse(const SizedBox()),
-        if (row.length < cols)
-          ...List.generate(
-            cols - row.length,
-            (_) => const Expanded(child: SizedBox()),
-          ),
-      ],
-    );
+    final items = <Widget>[];
+    for (var i = 0; i < row.length; i++) {
+      if (i > 0) items.add(const SizedBox(width: 12));
+      items.add(Expanded(child: _ProductCard(product: row[i])));
+    }
+    for (var i = row.length; i < cols; i++) {
+      items.add(const SizedBox(width: 12));
+      items.add(const Expanded(child: SizedBox()));
+    }
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: items);
   }
 }
 
