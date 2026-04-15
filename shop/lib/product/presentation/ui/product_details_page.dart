@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shop/common/breakpoints.dart';
 import 'package:shop/common/cloudinary.dart';
+import 'package:shop/common/ui/photo_lightbox.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
@@ -135,6 +136,9 @@ class _ProductInfo extends StatelessWidget {
             fontWeight: FontWeight.w700,
             color: const Color(0xFF111827),
             letterSpacing: -0.5,
+          ),
+          textHeightBehavior: const TextHeightBehavior(
+            applyHeightToFirstAscent: false,
           ),
         ),
         const Gap(16),
@@ -321,25 +325,35 @@ class _DetailsCarouselState extends State<_DetailsCarousel> {
           controller: _controller,
           onPageChanged: (i) => setState(() => _current = i),
           itemCount: widget.imageIds.length,
-          itemBuilder: (_, i) => Image.network(
-            cloudinaryUrl(widget.imageIds[i], size: CloudinarySize.medium),
-            width: double.infinity,
-            height: double.infinity,
-            fit: BoxFit.cover,
-            loadingBuilder: (_, child, progress) => progress == null
-                ? child
-                : Container(
-                    color: const Color(0xFFF3F4F6),
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFFD1D5DB),
+          itemBuilder: (ctx, i) => GestureDetector(
+            onTap: () => showPhotoLightbox(
+              ctx,
+              imageIds: widget.imageIds,
+              initialIndex: i,
+            ),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.zoomIn,
+              child: Image.network(
+                cloudinaryUrl(widget.imageIds[i], size: CloudinarySize.medium),
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (_, child, progress) => progress == null
+                    ? child
+                    : Container(
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFD1D5DB),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-            errorBuilder: (_, __, ___) => Container(
-              color: const Color(0xFFF3F4F6),
-              child: const Icon(Icons.image_outlined, size: 64, color: Color(0xFFD1D5DB)),
+                errorBuilder: (_, __, ___) => Container(
+                  color: const Color(0xFFF3F4F6),
+                  child: const Icon(Icons.image_outlined, size: 64, color: Color(0xFFD1D5DB)),
+                ),
+              ),
             ),
           ),
         ),

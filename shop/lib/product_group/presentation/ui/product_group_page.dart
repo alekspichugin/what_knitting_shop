@@ -271,6 +271,17 @@ class _ProductCardState extends State<_ProductCard> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+            if (widget.product.price > 0) ...[
+              const Gap(4),
+              Text(
+                '${widget.product.price.toStringAsFixed(0)} ₽',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF7C3AED),
+                ),
+              ),
+            ],
             const Gap(4),
           ],
         ),

@@ -65,6 +65,7 @@ class CartCubit extends Cubit<CartState> {
         'title': i.product.title,
         'description': i.product.description,
         'imageIds': i.product.imageIds,
+        'price': i.product.price,
         'quantity': i.quantity,
       }).toList());
       web.window.localStorage.setItem(_kStorageKey, json);
@@ -86,6 +87,7 @@ class CartCubit extends Cubit<CartState> {
             imageIds: (map['imageIds'] as List<dynamic>?)
                     ?.cast<String>() ??
                 const [],
+            price: (map['price'] as num?)?.toDouble() ?? 0,
           ),
           quantity: map['quantity'] as int,
         );

@@ -39,7 +39,7 @@ class ProductTile extends StatelessWidget {
         : _Title(text: title, thumbSize: thumbSize);
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Thumbnail(
           imageIds: imageIds,

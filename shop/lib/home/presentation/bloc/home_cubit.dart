@@ -20,16 +20,12 @@ class HomeCubit extends Cubit<HomeState> {
 
   Future load() async {
     try {
-      final results = await Future.wait([
-        _productGroupRepository.get(),
-        _newsRepository.get(),
-      ]);
-
-      emit(HomeState(
-        groups: results[0] as List<ProductGroup>,
-        news: results[1] as List<NewsItem>,
-        isLoaded: true,
-      ));
+      final groups = await _productGroupRepository.get();
+      List<NewsItem> news = const [];
+      try {
+        news = await _newsRepository.get();
+      } catch (_) {}
+      emit(HomeState(groups: groups, news: news, isLoaded: true));
     } catch (e) {
       emit(HomeState(isLoaded: true, throwable: e as Exception?));
     }

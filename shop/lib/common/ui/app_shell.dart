@@ -57,15 +57,9 @@ class ContentBox extends StatelessWidget {
     final effectivePadding = padding ??
         EdgeInsets.symmetric(horizontal: hPad, vertical: 24);
 
-    return Align(
-      alignment: Alignment.topLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: _kMaxWidth),
-        child: Padding(
-          padding: effectivePadding,
-          child: child,
-        ),
-      ),
+    return Padding(
+      padding: effectivePadding,
+      child: child,
     );
   }
 }

@@ -295,11 +295,26 @@ class _ProductRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-        if (product.imageIds.length > 1)
-          Text(
-            '${product.imageIds.length} фото',
-            style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
-          ),
+        Row(
+          children: [
+            if (product.price > 0)
+              Text(
+                '${product.price.toStringAsFixed(0)} ₽',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF7C3AED),
+                ),
+              ),
+            if (product.price > 0 && product.imageIds.length > 1)
+              const Text(' · ', style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF))),
+            if (product.imageIds.length > 1)
+              Text(
+                '${product.imageIds.length} фото',
+                style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              ),
+          ],
+        ),
       ],
     );
 

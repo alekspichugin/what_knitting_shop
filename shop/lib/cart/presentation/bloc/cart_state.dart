@@ -7,6 +7,8 @@ class CartState {
 
   int get totalCount => items.fold(0, (s, i) => s + i.quantity);
 
+  double get totalPrice => items.fold(0, (s, i) => s + i.product.price * i.quantity);
+
   CartState copyWith({List<CartItem>? items}) =>
       CartState(items: items ?? this.items);
 }

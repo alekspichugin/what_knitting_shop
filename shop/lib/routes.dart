@@ -6,6 +6,7 @@ import 'package:shop/common/ui/app_shell.dart';
 import 'package:shop/home/presentation/bloc/home_cubit.dart';
 import 'package:shop/home/presentation/ui/catalog_page.dart';
 import 'package:shop/home/presentation/ui/home_page.dart';
+import 'package:shop/order/presentation/bloc/order_cubit.dart';
 import 'package:shop/order/presentation/ui/order_page.dart';
 import 'package:shop/product/presentation/bloc/details/product_details_cubit.dart';
 import 'package:shop/product/presentation/bloc/list/product_list_cubit.dart';
@@ -117,8 +118,12 @@ GoRouter createRouter(AbstractInjector injector) {
 
           GoRoute(
             path: kOrderRoute,
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: OrderPage()),
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: BlocProvider(
+                create: (_) => OrderCubit(injector.telegramService),
+                child: const OrderPage(),
+              ),
+            ),
           ),
 
           GoRoute(

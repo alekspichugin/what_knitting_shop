@@ -45,6 +45,7 @@ class ProductGroupCubit extends Cubit<ProductGroupState> {
       imageIds: input.imageIds,
       title: input.title,
       description: input.description,
+      price: input.price,
     );
   }
 }

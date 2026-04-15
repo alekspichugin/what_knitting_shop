@@ -52,7 +52,7 @@ class CartPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _CartFooter(totalCount: state.totalCount),
+                  _CartFooter(totalCount: state.totalCount, totalPrice: state.totalPrice),
                 ],
               );
       },
@@ -100,7 +100,7 @@ class _EmptyCart extends StatelessWidget {
           ),
           const Gap(24),
           OutlinedButton(
-            onPressed: () => context.go(kHomeRoute),
+            onPressed: () => context.go(kCatalogRoute),
             style: OutlinedButton.styleFrom(
               padding:
                   const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -269,9 +269,10 @@ class _QtyButton extends StatelessWidget {
 // =============================================================================
 
 class _CartFooter extends StatelessWidget {
-  const _CartFooter({required this.totalCount});
+  const _CartFooter({required this.totalCount, required this.totalPrice});
 
   final int totalCount;
+  final double totalPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -289,13 +290,27 @@ class _CartFooter extends StatelessWidget {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Товаров: $totalCount шт.',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF374151),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Товаров: $totalCount шт.',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF374151),
+                        ),
+                      ),
+                      if (totalPrice > 0)
+                        Text(
+                          'Итого: ${totalPrice.toStringAsFixed(0)} ₽',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF7C3AED),
+                          ),
+                        ),
+                    ],
                   ),
                   const Gap(12),
                   _OrderButton(),
@@ -306,11 +321,22 @@ class _CartFooter extends StatelessWidget {
                   Text(
                     'Товаров: $totalCount шт.',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w500,
                       color: Color(0xFF374151),
                     ),
                   ),
+                  if (totalPrice > 0) ...[
+                    const SizedBox(width: 24),
+                    Text(
+                      'Итого: ${totalPrice.toStringAsFixed(0)} ₽',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF7C3AED),
+                      ),
+                    ),
+                  ],
                   const Spacer(),
                   _OrderButton(),
                 ],

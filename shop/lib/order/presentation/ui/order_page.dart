@@ -6,6 +6,7 @@ import 'package:shop/cart/domain/model/cart_item.dart';
 import 'package:shop/cart/presentation/bloc/cart_cubit.dart';
 import 'package:shop/cart/presentation/ui/cart_item_tile.dart';
 import 'package:shop/common/ui/app_shell.dart';
+import 'package:shop/order/presentation/bloc/order_cubit.dart';
 import 'package:shop/routes.dart';
 
 class OrderPage extends StatefulWidget {
@@ -41,7 +42,28 @@ class _OrderPageState extends State<OrderPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CartCubit, CartState>(
+    return BlocListener<OrderCubit, OrderState>(
+      listener: (context, orderState) {
+        if (orderState.isSuccess) {
+          context.read<CartCubit>().clear();
+          context.go(kHomeRoute);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Заказ отправлен! Мы свяжемся с вами.'),
+              backgroundColor: Color(0xFF7C3AED),
+            ),
+          );
+        }
+        if (orderState.isError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ошибка отправки: ${orderState.errorMessage}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: BlocBuilder<CartCubit, CartState>(
       builder: (context, state) {
         return ListView(
             children: [
@@ -125,6 +147,7 @@ class _OrderPageState extends State<OrderPage> {
                             lastNameFocus: _lastNameFocus,
                             phoneFocus: _phoneFocus,
                             addressFocus: _addressFocus,
+                            cartItems: state.items,
                           ),
                         ),
                         const Gap(40),
@@ -142,6 +165,7 @@ class _OrderPageState extends State<OrderPage> {
             ],
         );
       },
+    ),
     );
   }
 }
@@ -159,6 +183,7 @@ class _OrderForm extends StatelessWidget {
     required this.lastNameFocus,
     required this.phoneFocus,
     required this.addressFocus,
+    required this.cartItems,
   });
 
   final GlobalKey<FormState> formKey;
@@ -170,6 +195,7 @@ class _OrderForm extends StatelessWidget {
   final FocusNode lastNameFocus;
   final FocusNode phoneFocus;
   final FocusNode addressFocus;
+  final List<CartItem> cartItems;
 
   String? _required(String? v) =>
       (v == null || v.trim().isEmpty) ? 'Обязательное поле' : null;
@@ -245,23 +271,43 @@ class _OrderForm extends StatelessWidget {
             ),
           ),
           const Gap(16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () {
-                // TODO: implement order submission
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+          BlocBuilder<OrderCubit, OrderState>(
+            builder: (context, orderState) => SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: orderState.isLoading
+                    ? null
+                    : () {
+                        if (formKey.currentState!.validate()) {
+                          context.read<OrderCubit>().submit(
+                                firstName: firstNameCtrl.text.trim(),
+                                lastName: lastNameCtrl.text.trim(),
+                                phone: phoneCtrl.text.trim(),
+                                address: addressCtrl.text.trim(),
+                                items: cartItems,
+                              );
+                        }
+                      },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF7C3AED),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-              child: const Text(
-                'Оформить',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                child: orderState.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Оформить',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
               ),
             ),
           ),
@@ -335,6 +381,7 @@ class _OrderSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalCount = items.fold(0, (s, i) => s + i.quantity);
+    final totalPrice = items.fold(0.0, (s, i) => s + i.product.price * i.quantity);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -358,25 +405,27 @@ class _OrderSummary extends StatelessWidget {
           ...items.map((item) => _SummaryItem(item: item)),
           const Gap(8),
           const Divider(color: Color(0xFFE5E7EB)),
-          const Gap(8),
+          const Gap(12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Итого:',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF374151),
-                ),
-              ),
               Text(
                 '$totalCount шт.',
                 style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: Color(0xFF111827),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
                 ),
               ),
+              if (totalPrice > 0)
+                Text(
+                  '${totalPrice.toStringAsFixed(0)} ₽',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    color: Color(0xFF7C3AED),
+                  ),
+                ),
             ],
           ),
         ],
@@ -392,18 +441,35 @@ class _SummaryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final linePrice = item.product.price * item.quantity;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: CartItemTile(
         item: item,
         size: CartItemTileSize.small,
-        trailing: Text(
-          '× ${item.quantity} шт.',
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
+        trailing: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (linePrice > 0)
+              Text(
+                '${linePrice.toStringAsFixed(0)} ₽',
+                style: const TextStyle(
+                  color: Color(0xFF7C3AED),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            Text(
+              '× ${item.quantity} шт.',
+              style: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

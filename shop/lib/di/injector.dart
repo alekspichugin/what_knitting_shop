@@ -3,6 +3,7 @@ import 'package:shop/about/data/repository/firebase_about_repository.dart';
 import 'package:shop/common/services/cloudinary_service.dart';
 import 'package:shop/firebase_options.dart';
 import 'package:shop/news/data/repository/firebase_news_repository.dart';
+import 'package:shop/order/data/telegram_service.dart';
 import 'package:shop/product/data/repository/firebase_product_repository.dart';
 import 'package:shop/product_group/data/repository/firebase_product_group_repository.dart';
 import 'package:synchronized/synchronized.dart';
@@ -38,5 +39,9 @@ class RemoteInjector extends AbstractInjector {
     aboutRepository = FirebaseAboutRepository();
     infoRepository = FirebaseAboutRepository(collectionId: 'info');
     cloudinaryService = const CloudinaryService();
+    telegramService = const TelegramService(
+      botToken: '8227579614:AAG-e2hhgI7bpLCWRD164uA-W8bQzkSIalw',
+      chatId: '821973633',
+    );
   }
 }
