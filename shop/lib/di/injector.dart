@@ -41,7 +41,7 @@ class RemoteInjector extends AbstractInjector {
     cloudinaryService = const CloudinaryService();
     telegramService = const TelegramService(
       botToken: '8227579614:AAG-e2hhgI7bpLCWRD164uA-W8bQzkSIalw',
-      chatId: '821973633',
+      chatIds: ['821973633', '725064208'],
     );
   }
 }

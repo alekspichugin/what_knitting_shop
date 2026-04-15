@@ -95,6 +95,7 @@ class _AppHeader extends StatelessWidget {
                         tooltip: 'Меню',
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
+                        visualDensity: VisualDensity.compact,
                       ),
                     ),
                   if (mobile) const SizedBox(width: 12),
@@ -293,23 +294,56 @@ class _CartButtonState extends State<_CartButton> {
         final hasItems = state.totalCount > 0;
         final mobile = context.isMobile;
 
+        void onTap() {
+          final current = GoRouterState.of(context).uri.path;
+          if (current != kProductBasketRoute) {
+            context.push(kProductBasketRoute);
+          }
+        }
+
+        // На мобиле — иконка с бейджем без фона
+        if (mobile) {
+          return GestureDetector(
+            onTap: onTap,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.shopping_cart_outlined, size: 24, color: Color(0xFF374151)),
+                if (hasItems)
+                  Positioned(
+                    top: -4,
+                    right: -6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: _kBrandColor,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${state.totalCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        // На десктопе — кнопка с фоном
         return MouseRegion(
           cursor: SystemMouseCursors.click,
           onEnter: (_) => setState(() => _hovered = true),
           onExit: (_) => setState(() => _hovered = false),
           child: GestureDetector(
-            onTap: () {
-              final current = GoRouterState.of(context).uri.path;
-              if (current != kProductBasketRoute) {
-                context.push(kProductBasketRoute);
-              }
-            },
+            onTap: onTap,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              padding: EdgeInsets.symmetric(
-                horizontal: mobile ? 10 : 16,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: hasItems
                     ? _kBrandColor
@@ -341,7 +375,7 @@ class _CartButtonState extends State<_CartButton> {
                         fontSize: 14,
                       ),
                     ),
-                  ] else if (!mobile) ...[
+                  ] else ...[
                     const SizedBox(width: 8),
                     const Text(
                       'Корзина',
