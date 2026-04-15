@@ -148,6 +148,17 @@ class _ProductInfo extends StatelessWidget {
             height: 1.6,
           ),
         ),
+        if (product.price > 0) ...[
+          const Gap(16),
+          Text(
+            '${product.price.toStringAsFixed(0)} ₽',
+            style: TextStyle(
+              fontSize: context.isMobile ? 22 : 26,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF7C3AED),
+            ),
+          ),
+        ],
         const Gap(32),
         const Divider(color: Color(0xFFE5E7EB)),
         const Gap(24),

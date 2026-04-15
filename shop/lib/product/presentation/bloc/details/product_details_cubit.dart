@@ -39,7 +39,8 @@ class ProductDetailsCubit extends Cubit<ProductDetailsState> {
         id: input.id,
         imageIds: input.imageIds,
         title: input.title,
-        description: input.description
+        description: input.description,
+        price: input.price,
     );
   }
 }

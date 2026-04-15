@@ -6,11 +6,13 @@ class ProductDraft {
     required this.title,
     required this.description,
     required this.imageIds,
+    this.price = 0,
   });
 
   final String title;
   final String description;
   final List<String> imageIds;
+  final double price;
 }
 
 class ProductExcelParseResult {

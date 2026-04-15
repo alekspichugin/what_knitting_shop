@@ -29,6 +29,7 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _priceCtrl = TextEditingController();
   List<String> _imageIds = [];
   bool _uploading = false;
   int _uploadingCurrent = 0;
@@ -44,6 +45,7 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
+    _priceCtrl.dispose();
     super.dispose();
   }
 
@@ -55,6 +57,7 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
         _original = found;
         _titleCtrl.text = found.title;
         _descCtrl.text = found.description;
+        _priceCtrl.text = found.price > 0 ? found.price.toStringAsFixed(0) : '';
         _imageIds = List.from(found.imageIds);
         _loaded = true;
       }
@@ -160,6 +163,7 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
       description: _descCtrl.text.trim(),
       imageIds: _imageIds,
       selectedGroupId: _selectedGroupId,
+      price: double.tryParse(_priceCtrl.text.trim().replaceAll(',', '.')) ?? 0,
     );
 
     if (mounted) context.go('/products');
@@ -219,6 +223,8 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
                     _field(controller: _titleCtrl, label: 'Название', required: true),
                     const SizedBox(height: 16),
                     _field(controller: _descCtrl, label: 'Описание', maxLines: 4),
+                    const SizedBox(height: 16),
+                    _priceField(),
                     const SizedBox(height: 16),
                     _MultiImagePicker(
                       imageIds: _imageIds,
@@ -282,6 +288,25 @@ class _ProductAdminFormPageState extends State<ProductAdminFormPage> {
         border: const OutlineInputBorder(),
       ),
       validator: required ? (v) => (v == null || v.trim().isEmpty) ? 'Обязательное поле' : null : null,
+    );
+  }
+
+  Widget _priceField() {
+    return TextFormField(
+      controller: _priceCtrl,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: const InputDecoration(
+        labelText: 'Цена',
+        hintText: '0',
+        suffixText: '₽',
+        border: OutlineInputBorder(),
+      ),
+      validator: (v) {
+        if (v == null || v.trim().isEmpty) return null;
+        final parsed = double.tryParse(v.trim().replaceAll(',', '.'));
+        if (parsed == null || parsed < 0) return 'Введите корректную цену';
+        return null;
+      },
     );
   }
 }

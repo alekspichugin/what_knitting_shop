@@ -22,8 +22,8 @@ class ProductAdminCubit extends Cubit<ProductAdminState> {
     }
   }
 
-  Future<Product> create({required String title, required String description, required List<String> imageIds}) async {
-    final product = await _repo.create(title: title, description: description, imageIds: imageIds);
+  Future<Product> create({required String title, required String description, required List<String> imageIds, double price = 0}) async {
+    final product = await _repo.create(title: title, description: description, imageIds: imageIds, price: price);
     await load();
     return product;
   }
@@ -45,12 +45,13 @@ class ProductAdminCubit extends Cubit<ProductAdminState> {
     required String description,
     required List<String> imageIds,
     required int? selectedGroupId,
+    double price = 0,
   }) async {
     final groups = await _groupRepo.get();
 
     if (original == null) {
       // Создание
-      final product = await _repo.create(title: title, description: description, imageIds: imageIds);
+      final product = await _repo.create(title: title, description: description, imageIds: imageIds, price: price);
       if (selectedGroupId != null) {
         final group = groups.firstWhereOrNull((g) => g.id == selectedGroupId);
         if (group != null && !group.productIds.contains(product.id)) {
@@ -59,7 +60,7 @@ class ProductAdminCubit extends Cubit<ProductAdminState> {
       }
     } else {
       // Обновление
-      await _repo.update(original.copyWith(title: title, description: description, imageIds: imageIds));
+      await _repo.update(original.copyWith(title: title, description: description, imageIds: imageIds, price: price));
 
       final oldGroup = groups.firstWhereOrNull((g) => g.productIds.contains(original.id));
       if (oldGroup?.id != selectedGroupId) {
@@ -92,6 +93,7 @@ class ProductAdminCubit extends Cubit<ProductAdminState> {
           title: draft.title,
           description: draft.description,
           imageIds: draft.imageIds,
+          price: draft.price,
         );
         created++;
       } catch (_) {

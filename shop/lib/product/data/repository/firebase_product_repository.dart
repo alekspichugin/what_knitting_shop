@@ -51,10 +51,11 @@ class FirebaseProductRepository implements AbstractProductRepository {
     required String title,
     required String description,
     required List<String> imageIds,
+    double price = 0,
   }) async {
     final snap = await _col.orderBy('id', descending: true).limit(1).get();
     final nextId = snap.docs.isEmpty ? 0 : (_fromDoc(snap.docs.first).id + 1);
-    final product = Product(id: nextId, imageIds: imageIds, title: title, description: description);
+    final product = Product(id: nextId, imageIds: imageIds, title: title, description: description, price: price);
     await _col.doc('$nextId').set(_toMap(product));
     _invalidate();
     return product;
@@ -85,6 +86,7 @@ class FirebaseProductRepository implements AbstractProductRepository {
       imageIds: imageIds,
       title: data['title'] as String? ?? '',
       description: data['description'] as String? ?? '',
+      price: (data['price'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -93,5 +95,6 @@ class FirebaseProductRepository implements AbstractProductRepository {
         'imageIds': p.imageIds,
         'title': p.title,
         'description': p.description,
+        'price': p.price,
       };
 }
