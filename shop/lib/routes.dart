@@ -43,7 +43,7 @@ GoRouter createRouter(AbstractInjector injector) {
                   injector.productGroupRepository,
                   injector.newsRepository,
                 )..load(),
-                child: const HomePage(),
+                child: const CatalogPage(),
               ),
             ),
           ),

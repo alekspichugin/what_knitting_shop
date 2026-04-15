@@ -125,6 +125,39 @@ class _CartItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<CartCubit>();
+    final mobile = context.isMobile;
+
+    if (mobile) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: CartItemTile(
+                    item: item,
+                    size: CartItemTileSize.small,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Color(0xFF9CA3AF)),
+                  onPressed: () => cubit.remove(item.product.id),
+                  tooltip: 'Удалить',
+                ),
+              ],
+            ),
+            const Gap(8),
+            _QtyRow(
+              quantity: item.quantity,
+              onDecrement: () => cubit.decrement(item.product.id),
+              onIncrement: () => cubit.increment(item.product.id),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -134,36 +167,10 @@ class _CartItemRow extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _QtyButton(
-                    icon: Icons.remove,
-                    onTap: () => cubit.decrement(item.product.id),
-                  ),
-                  SizedBox(
-                    width: 36,
-                    child: Text(
-                      '${item.quantity}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                  ),
-                  _QtyButton(
-                    icon: Icons.add,
-                    onTap: () => cubit.increment(item.product.id),
-                  ),
-                ],
-              ),
+            _QtyRow(
+              quantity: item.quantity,
+              onDecrement: () => cubit.decrement(item.product.id),
+              onIncrement: () => cubit.increment(item.product.id),
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Color(0xFF9CA3AF)),
@@ -172,6 +179,47 @@ class _CartItemRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _QtyRow extends StatelessWidget {
+  const _QtyRow({
+    required this.quantity,
+    required this.onDecrement,
+    required this.onIncrement,
+  });
+
+  final int quantity;
+  final VoidCallback onDecrement;
+  final VoidCallback onIncrement;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _QtyButton(icon: Icons.remove, onTap: onDecrement),
+          SizedBox(
+            width: 36,
+            child: Text(
+              '$quantity',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF111827),
+              ),
+            ),
+          ),
+          _QtyButton(icon: Icons.add, onTap: onIncrement),
+        ],
       ),
     );
   }

@@ -5,6 +5,7 @@ class ProductGroupState extends AbstractState {
     this.groupId,
     this.groupTitle,
     List<ViewProduct>? products,
+    this.isLoaded = false,
     super.throwable,
     super.isCritical,
   }) : products = products ?? const <ViewProduct>[];
@@ -12,7 +13,8 @@ class ProductGroupState extends AbstractState {
   final int? groupId;
   final String? groupTitle;
   final List<ViewProduct> products;
+  final bool isLoaded;
 
   @override
-  List get props => [groupId, groupTitle, products, ...super.props];
+  List get props => [groupId, groupTitle, products, isLoaded, ...super.props];
 }

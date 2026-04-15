@@ -11,6 +11,7 @@ abstract class AbstractInjector {
   late final AbstractProductGroupRepository productGroupRepository;
   late final AbstractNewsRepository newsRepository;
   late final AbstractAboutRepository aboutRepository;
+  late final AbstractAboutRepository infoRepository;
   late final CloudinaryService cloudinaryService;
 
   AbstractInjector();

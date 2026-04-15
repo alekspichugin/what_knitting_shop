@@ -3,7 +3,10 @@ import 'package:shop/about/domain/abstract_about_repository.dart';
 import 'package:shop/about/domain/model/about_content.dart';
 
 class FirebaseAboutRepository implements AbstractAboutRepository {
-  final _doc = FirebaseFirestore.instance.collection('about').doc('content');
+  FirebaseAboutRepository({String collectionId = 'about'})
+      : _doc = FirebaseFirestore.instance.collection(collectionId).doc('content');
+
+  final DocumentReference<Map<String, dynamic>> _doc;
 
   static const _ttl = Duration(minutes: 10);
 

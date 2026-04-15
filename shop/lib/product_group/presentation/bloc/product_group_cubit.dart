@@ -23,7 +23,7 @@ class ProductGroupCubit extends Cubit<ProductGroupState> {
   Future load() async {
     final group = await _productGroupRepository.getById(_groupId);
     if (group == null) {
-      emit(const ProductGroupState());
+      emit(const ProductGroupState(isLoaded: true));
       return;
     }
 
@@ -35,6 +35,7 @@ class ProductGroupCubit extends Cubit<ProductGroupState> {
       groupId: _groupId,
       groupTitle: group.title,
       products: products.map(_mapToViewProduct).toList(),
+      isLoaded: true,
     ));
   }
 

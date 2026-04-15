@@ -9,6 +9,7 @@ import 'package:shop/about/domain/model/about_content.dart';
 import 'package:shop/about/presentation/bloc/about_cubit.dart';
 import 'package:shop/about/presentation/bloc/about_editor_cubit.dart';
 import 'package:shop/about/presentation/bloc/about_editor_state.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/common/cloudinary.dart';
 import 'package:web/web.dart' as web;
 
@@ -21,7 +22,14 @@ const _kGray        = Color(0xFF9CA3AF);
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 class AboutEditorPage extends StatefulWidget {
-  const AboutEditorPage({super.key});
+  const AboutEditorPage({
+    super.key,
+    this.pageTitle = 'О нас',
+    this.backRoute = '/about',
+  });
+
+  final String pageTitle;
+  final String backRoute;
 
   @override
   State<AboutEditorPage> createState() => _AboutEditorPageState();
@@ -107,13 +115,46 @@ class _AboutEditorPageState extends State<AboutEditorPage> {
     };
     final content = editorCubit.buildContent(textValues);
     context.read<AboutCubit>().save(content);
-    context.go('/about');
+    context.go(widget.backRoute);
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    if (context.isMobile) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.desktop_windows_outlined, size: 48, color: Color(0xFF9CA3AF)),
+                const SizedBox(height: 16),
+                const Text(
+                  'Редактор недоступен на мобильном устройстве',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Откройте страницу на компьютере',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                ),
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  onPressed: () => context.go(widget.backRoute),
+                  icon: const Icon(Icons.arrow_back, size: 16),
+                  label: const Text('Назад'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return BlocConsumer<AboutCubit, AboutState>(
       listener: (context, state) {
         if (state is AboutLoaded) {
@@ -135,7 +176,7 @@ class _AboutEditorPageState extends State<AboutEditorPage> {
 
             return Column(
               children: [
-                _Header(busy: busy, onSave: _save, onBack: () => context.go('/about')),
+                _Header(pageTitle: widget.pageTitle, busy: busy, onSave: _save, onBack: () => context.go(widget.backRoute)),
                 Expanded(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +213,8 @@ class _AboutEditorPageState extends State<AboutEditorPage> {
 // ─── Header ───────────────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
-  const _Header({required this.busy, required this.onSave, required this.onBack});
+  const _Header({required this.pageTitle, required this.busy, required this.onSave, required this.onBack});
+  final String pageTitle;
   final bool busy;
   final VoidCallback onSave;
   final VoidCallback onBack;
@@ -196,9 +238,9 @@ class _Header extends StatelessWidget {
             constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 12),
-          const Text(
-            'Редактор страницы «О нас»',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+          Text(
+            'Редактор страницы «$pageTitle»',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
           ),
           const Spacer(),
           FilledButton.icon(

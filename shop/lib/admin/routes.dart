@@ -43,8 +43,6 @@ GoRouter createAdminRouter(AbstractInjector injector, ValueNotifier<bool> auth) 
             BlocProvider(create: (_) => ProductAdminCubit(injector.productRepository, injector.productGroupRepository)..load()),
             BlocProvider(create: (_) => GroupAdminCubit(injector.productGroupRepository)..load()),
             BlocProvider(create: (_) => NewsAdminCubit(injector.newsRepository)..load()),
-            BlocProvider(create: (_) => AboutCubit(injector.aboutRepository)..load()),
-            BlocProvider(create: (_) => AboutEditorCubit(injector.cloudinaryService)),
           ],
           child: AdminShell(child: child),
         ),
@@ -121,14 +119,46 @@ GoRouter createAdminRouter(AbstractInjector injector, ValueNotifier<bool> auth) 
           // ── About ─────────────────────────────────────────────────────────
           GoRoute(
             path: '/about',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: AboutAdminPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: BlocProvider(
+                create: (_) => AboutCubit(injector.aboutRepository)..load(),
+                child: const AboutAdminPage(pageTitle: 'О нас', editRoute: '/about/edit'),
+              ),
             ),
           ),
           GoRoute(
             path: '/about/edit',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: AboutEditorPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (_) => AboutCubit(injector.aboutRepository)..load()),
+                  BlocProvider(create: (_) => AboutEditorCubit(injector.cloudinaryService)),
+                ],
+                child: const AboutEditorPage(pageTitle: 'О нас', backRoute: '/about'),
+              ),
+            ),
+          ),
+
+          // ── Info ──────────────────────────────────────────────────────────
+          GoRoute(
+            path: '/info',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: BlocProvider(
+                create: (_) => AboutCubit(injector.infoRepository)..load(),
+                child: const AboutAdminPage(pageTitle: 'Информация', editRoute: '/info/edit'),
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/info/edit',
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (_) => AboutCubit(injector.infoRepository)..load()),
+                  BlocProvider(create: (_) => AboutEditorCubit(injector.cloudinaryService)),
+                ],
+                child: const AboutEditorPage(pageTitle: 'Информация', backRoute: '/info'),
+              ),
             ),
           ),
         ],

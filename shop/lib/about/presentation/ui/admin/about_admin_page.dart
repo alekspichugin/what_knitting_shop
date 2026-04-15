@@ -6,7 +6,14 @@ import 'package:shop/about/presentation/bloc/about_cubit.dart';
 import 'package:shop/common/cloudinary.dart';
 
 class AboutAdminPage extends StatelessWidget {
-  const AboutAdminPage({super.key});
+  const AboutAdminPage({
+    super.key,
+    this.pageTitle = 'О нас',
+    this.editRoute = '/about/edit',
+  });
+
+  final String pageTitle;
+  final String editRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -25,13 +32,13 @@ class AboutAdminPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Text(
-                    'Страница «О нас»',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
+                  Text(
+                    'Страница «$pageTitle»',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF111827)),
                   ),
                   const Spacer(),
                   FilledButton.icon(
-                    onPressed: () => context.go('/about/edit'),
+                    onPressed: () => context.go(editRoute),
                     icon: const Icon(Icons.edit_outlined, size: 16),
                     label: const Text('Редактировать'),
                     style: FilledButton.styleFrom(backgroundColor: const Color(0xFF7C3AED)),
@@ -51,7 +58,7 @@ class AboutAdminPage extends StatelessWidget {
                       const Text('Страница пустая', style: TextStyle(color: Color(0xFF9CA3AF))),
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
-                        onPressed: () => context.go('/about/edit'),
+                        onPressed: () => context.go(editRoute),
                         icon: const Icon(Icons.edit_outlined, size: 16),
                         label: const Text('Добавить контент'),
                         style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF7C3AED)),

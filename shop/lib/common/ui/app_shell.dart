@@ -108,8 +108,6 @@ class _AppHeader extends StatelessWidget {
                   if (!mobile) ...[
                     const SizedBox(width: 40),
                     const _NavLink(label: 'Каталог', route: kCatalogRoute),
-                    const SizedBox(width: 24),
-                    const _NavLink(label: 'О нас', route: kAboutRoute),
                   ],
                   const Spacer(),
                   const _CartButton(),
@@ -147,11 +145,6 @@ class _MobileDrawer extends StatelessWidget {
               icon: Icons.grid_view_rounded,
               label: 'Каталог',
               route: kCatalogRoute,
-            ),
-            _DrawerItem(
-              icon: Icons.info_outline_rounded,
-              label: 'О нас',
-              route: kAboutRoute,
             ),
             _DrawerItem(
               icon: Icons.shopping_cart_outlined,

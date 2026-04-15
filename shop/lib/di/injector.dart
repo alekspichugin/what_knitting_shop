@@ -36,6 +36,7 @@ class RemoteInjector extends AbstractInjector {
     productGroupRepository = FirebaseProductGroupRepository();
     newsRepository = FirebaseNewsRepository();
     aboutRepository = FirebaseAboutRepository();
+    infoRepository = FirebaseAboutRepository(collectionId: 'info');
     cloudinaryService = const CloudinaryService();
   }
 }

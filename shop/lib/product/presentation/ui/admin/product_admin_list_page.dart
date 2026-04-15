@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/common/ui/product_tile.dart';
 import 'package:shop/product/data/excel/product_excel_template.dart';
 import 'package:shop/product/domain/model/product.dart';
@@ -42,8 +43,11 @@ class ProductAdminListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = context.isMobile;
+    final pad = mobile ? 16.0 : 32.0;
+
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(pad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -51,24 +55,45 @@ class ProductAdminListPage extends StatelessWidget {
             children: [
               const Text('Товары', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               const Spacer(),
-              TextButton.icon(
-                onPressed: _downloadTemplate,
-                icon: const Icon(Icons.download_outlined, size: 18),
-                label: const Text('Шаблон'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: () => showProductImportDialog(context),
-                icon: const Icon(Icons.upload_file_outlined, size: 18),
-                label: const Text('Импорт'),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.icon(
-                onPressed: () => context.push('/products/new'),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Добавить товар'),
-                style: FilledButton.styleFrom(backgroundColor: const Color(0xFF7C3AED)),
-              ),
+              if (mobile) ...[
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (v) {
+                    if (v == 'template') _downloadTemplate();
+                    if (v == 'import') showProductImportDialog(context);
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'template', child: Text('Скачать шаблон')),
+                    PopupMenuItem(value: 'import', child: Text('Импорт CSV')),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: () => context.push('/products/new'),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Добавить'),
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF7C3AED)),
+                ),
+              ] else ...[
+                TextButton.icon(
+                  onPressed: _downloadTemplate,
+                  icon: const Icon(Icons.download_outlined, size: 18),
+                  label: const Text('Шаблон'),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => showProductImportDialog(context),
+                  icon: const Icon(Icons.upload_file_outlined, size: 18),
+                  label: const Text('Импорт'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: () => context.push('/products/new'),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Добавить товар'),
+                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF7C3AED)),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 24),

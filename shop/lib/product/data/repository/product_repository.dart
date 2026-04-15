@@ -21,8 +21,8 @@ class ProductRepository implements AbstractProductRepository {
   }
 
   @override
-  Future<Product> create({required String title, required String description, required List<String> imageIds}) async {
-    final product = Product(id: _nextId, imageIds: imageIds, title: title, description: description);
+  Future<Product> create({required String title, required String description, required List<String> imageIds, double price = 0}) async {
+    final product = Product(id: _nextId, imageIds: imageIds, title: title, description: description, price: price);
     _products[_nextId++] = product;
     return product;
   }

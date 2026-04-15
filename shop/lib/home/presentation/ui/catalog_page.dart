@@ -19,10 +19,30 @@ class CatalogPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (state.groups.isEmpty) {
-            return const Center(
-              child: Text(
-                'Нет категорий',
-                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 16),
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(36),
+                    ),
+                    child: const Icon(Icons.category_outlined, size: 32, color: Color(0xFF9CA3AF)),
+                  ),
+                  const Gap(16),
+                  const Text(
+                    'Каталог пока пуст',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+                  ),
+                  const Gap(6),
+                  const Text(
+                    'Скоро здесь появятся категории товаров',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                  ),
+                ],
               ),
             );
           }

@@ -29,9 +29,38 @@ class ProductGroupPage extends StatelessWidget {
           }
         }
 
-        return state.products.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
+        if (!state.isLoaded) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state.products.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(36),
+                  ),
+                  child: const Icon(Icons.inventory_2_outlined, size: 32, color: Color(0xFF9CA3AF)),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Товаров пока нет',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Скоро здесь появятся товары',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+          );
+        }
+        return ListView(
                 children: [
                   ContentBox(
                     child: Column(

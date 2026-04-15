@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shop/common/breakpoints.dart';
 import 'package:shop/product_group/domain/model/product_group.dart';
 import 'package:shop/product_group/presentation/bloc/admin/group_admin_cubit.dart';
 import 'package:shop/product_group/presentation/bloc/admin/group_admin_state.dart';
@@ -10,8 +11,11 @@ class GroupAdminListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = context.isMobile;
+    final pad = mobile ? 16.0 : 32.0;
+
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(pad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -22,7 +26,7 @@ class GroupAdminListPage extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () => context.push('/groups/new'),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Добавить группу'),
+                label: Text(mobile ? 'Добавить' : 'Добавить группу'),
                 style: FilledButton.styleFrom(backgroundColor: const Color(0xFF7C3AED)),
               ),
             ],
@@ -158,19 +162,21 @@ class _GroupRow extends StatelessWidget {
               ],
             ),
           ),
-          // Товаров badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(12),
+          // Товаров badge (только на десктопе)
+          if (!context.isMobile) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${group.productIds.length} товаров',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
             ),
-            child: Text(
-              '${group.productIds.length} товаров',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-            ),
-          ),
-          const SizedBox(width: 8),
+            const SizedBox(width: 8),
+          ],
           // Actions
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 18),

@@ -5,7 +5,6 @@ import 'package:shop/about/presentation/bloc/about_cubit.dart';
 import 'package:shop/common/cloudinary.dart';
 import 'package:shop/common/ui/app_shell.dart';
 
-const _kBrand = Color(0xFF7C3AED);
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -28,6 +27,35 @@ class AboutPage extends StatelessWidget {
           _ => AboutContent(rows: []),
         };
 
+        if (content.rows.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(36),
+                  ),
+                  child: const Icon(Icons.info_outline, size: 32, color: Color(0xFF9CA3AF)),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Страница пока не заполнена',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Информация появится здесь совсем скоро',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+          );
+        }
+
         return ListView(
           children: [
             ContentBox(
@@ -35,20 +63,7 @@ class AboutPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 52),
-                  // Brand accent line
-                  Container(
-                    width: 52,
-                    height: 4,
-                    decoration: BoxDecoration(color: _kBrand, borderRadius: BorderRadius.circular(2)),
-                  ),
-                  const SizedBox(height: 32),
-                  if (content.rows.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 48),
-                      child: Center(child: Text('Страница пустая', style: TextStyle(color: Color(0xFF9CA3AF)))),
-                    )
-                  else
-                    ...content.rows.map((row) => _Row(row: row)),
+                  ...content.rows.map((row) => _Row(row: row)),
                   const SizedBox(height: 72),
                 ],
               ),
